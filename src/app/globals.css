@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", var(--font-sans);
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+@layer base {
+  * {
+    @apply border-iron-700/60;
+  }
+
+  html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-iron-950 text-iron-100 antialiased;
+  }
+
+  ::selection {
+    @apply bg-copper-500/30 text-white;
+  }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-6xl px-6 sm:px-8;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-copper-400 via-copper-500 to-copper-600 bg-clip-text text-transparent;
+  }
+
+  .card-surface {
+    @apply rounded-2xl border border-iron-700 bg-iron-900/60 shadow-panel backdrop-blur-sm;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-iron-600;
+  }
+}
