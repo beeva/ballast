@@ -1,0 +1,52 @@
+{
+  "name": "ballast",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A deployment and observability control plane: a real build runner, deploy/rollback on build history, metrics + alerting, and a cost estimator.",
+  "keywords": ["deployment", "ci-cd", "observability", "devops", "nextjs"],
+  "license": "MIT",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "db:seed": "tsx scripts/seed.ts",
+    "worker": "tsx scripts/run-worker.ts",
+    "worker:watch": "tsx scripts/run-worker.ts --watch"
+  },
+  "dependencies": {
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "drizzle-orm": "^0.38.0",
+    "postgres": "^3.4.5",
+    "zod": "^3.24.1",
+    "jose": "^5.9.6",
+    "clsx": "^2.1.1",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "tailwindcss": "^3.4.17",
+    "postcss": "^8.4.49",
+    "autoprefixer": "^10.4.20",
+    "drizzle-kit": "^0.30.1",
+    "tsx": "^4.19.2",
+    "dotenv": "^16.4.7",
+    "eslint": "^9.17.0",
+    "eslint-config-next": "^15.1.0",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
