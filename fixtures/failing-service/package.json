@@ -1,0 +1,9 @@
+{
+  "name": "failing-service",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A real service whose build genuinely fails, for exercising the build runner's failure path.",
+  "scripts": {
+    "build": "node build.js"
+  }
+}
