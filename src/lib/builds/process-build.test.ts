@@ -54,9 +54,9 @@ describe("processNextQueuedBuild", () => {
     runBuildMock.mockReset();
   });
 
-  it("returns false and does no writes when the queue is empty", async () => {
-    const processed = await processNextQueuedBuild(makeFakeDb(), "/workspaces");
-    expect(processed).toBe(false);
+  it("returns processed: false and does no writes when the queue is empty", async () => {
+    const result = await processNextQueuedBuild(makeFakeDb(), "/workspaces");
+    expect(result).toEqual({ processed: false });
     expect(calls.filter((c) => c.op === "update")).toHaveLength(0);
   });
 
@@ -64,14 +64,15 @@ describe("processNextQueuedBuild", () => {
     queuedBuild = { id: "build-1", serviceId: "svc-1" };
     service = {
       id: "svc-1",
+      slug: "svc-1-slug",
       repoUrl: "/repo",
       buildCommand: "npm run build",
       workingDirectory: ".",
     };
     runBuildMock.mockResolvedValue({ success: true, logs: "ok", durationMs: 1200 });
 
-    const processed = await processNextQueuedBuild(makeFakeDb(), "/workspaces");
-    expect(processed).toBe(true);
+    const result = await processNextQueuedBuild(makeFakeDb(), "/workspaces");
+    expect(result).toMatchObject({ processed: true, buildId: "build-1", serviceSlug: "svc-1-slug", success: true });
 
     const updates = calls.filter((c): c is Call & { op: "update" } => c.op === "update");
     expect(updates).toHaveLength(2);
@@ -85,7 +86,7 @@ describe("processNextQueuedBuild", () => {
 
   it("marks the build failed, with the real error message, on a failing build", async () => {
     queuedBuild = { id: "build-2", serviceId: "svc-1" };
-    service = { id: "svc-1", repoUrl: "/repo", buildCommand: "npm run build", workingDirectory: "." };
+    service = { id: "svc-1", slug: "svc-1-slug", repoUrl: "/repo", buildCommand: "npm run build", workingDirectory: "." };
     runBuildMock.mockResolvedValue({
       success: false,
       logs: "boom",
@@ -93,7 +94,8 @@ describe("processNextQueuedBuild", () => {
       errorMessage: "build command exited non-zero",
     });
 
-    await processNextQueuedBuild(makeFakeDb(), "/workspaces");
+    const result = await processNextQueuedBuild(makeFakeDb(), "/workspaces");
+    expect(result).toMatchObject({ processed: true, success: false });
 
     const updates = calls.filter((c): c is Call & { op: "update" } => c.op === "update");
     expect(updates[1]?.values).toMatchObject({
@@ -106,8 +108,8 @@ describe("processNextQueuedBuild", () => {
     queuedBuild = { id: "build-3", serviceId: "deleted-svc" };
     service = null;
 
-    const processed = await processNextQueuedBuild(makeFakeDb(), "/workspaces");
-    expect(processed).toBe(true);
+    const result = await processNextQueuedBuild(makeFakeDb(), "/workspaces");
+    expect(result).toMatchObject({ processed: true, success: false });
     expect(runBuildMock).not.toHaveBeenCalled();
 
     const updates = calls.filter((c): c is Call & { op: "update" } => c.op === "update");

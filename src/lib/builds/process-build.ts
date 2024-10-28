@@ -11,16 +11,21 @@ import { runBuild } from "./runner";
 // rather than importing the server-only-guarded singleton directly.
 export type Db = typeof DbClient;
 
+export type ProcessResult =
+  | { processed: false }
+  | { processed: true; buildId: string; serviceSlug: string; success: boolean; durationMs?: number };
+
 /**
- * Claims and runs the single oldest queued build, if any. Returns whether
- * it found work to do, so the caller's poll loop can back off when idle
- * instead of hammering the database. Marks the build `running` before
- * doing anything else, so a worker crash mid-build leaves a build stuck in
- * `running` rather than silently re-queued and re-run from scratch.
+ * Claims and runs the single oldest queued build, if any. Returns enough
+ * about what happened for the caller's poll loop to log real progress
+ * instead of staying silent until the queue empties out. Marks the build
+ * `running` before doing anything else, so a worker crash mid-build leaves
+ * a build stuck in `running` rather than silently re-queued and re-run
+ * from scratch.
  */
-export async function processNextQueuedBuild(db: Db, workspaceRoot: string): Promise<boolean> {
+export async function processNextQueuedBuild(db: Db, workspaceRoot: string): Promise<ProcessResult> {
   const [build] = await db.select().from(builds).where(eq(builds.status, "queued")).orderBy(asc(builds.queuedAt)).limit(1);
-  if (!build) return false;
+  if (!build) return { processed: false };
 
   const [service] = await db.select().from(services).where(eq(services.id, build.serviceId));
   if (!service) {
@@ -32,7 +37,7 @@ export async function processNextQueuedBuild(db: Db, workspaceRoot: string): Pro
         finishedAt: new Date(),
       })
       .where(eq(builds.id, build.id));
-    return true;
+    return { processed: true, buildId: build.id, serviceSlug: "(deleted service)", success: false };
   }
 
   const startedAt = new Date();
@@ -56,5 +61,11 @@ export async function processNextQueuedBuild(db: Db, workspaceRoot: string): Pro
     })
     .where(and(eq(builds.id, build.id), eq(builds.status, "running")));
 
-  return true;
+  return {
+    processed: true,
+    buildId: build.id,
+    serviceSlug: service.slug,
+    success: result.success,
+    durationMs: result.durationMs,
+  };
 }

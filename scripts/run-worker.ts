@@ -27,9 +27,12 @@ async function main() {
 
   let idleTicks = 0;
   for (;;) {
-    const processed = await processNextQueuedBuild(db, workspaceRoot);
-    if (processed) {
+    const result = await processNextQueuedBuild(db, workspaceRoot);
+    if (result.processed) {
       idleTicks = 0;
+      const outcome = result.success ? "succeeded" : "FAILED";
+      const timing = result.durationMs === undefined ? "" : ` in ${result.durationMs}ms`;
+      console.log(`Build ${result.buildId} (${result.serviceSlug}) ${outcome}${timing}`);
     } else if (!watch) {
       console.log("No queued builds.");
       break;
