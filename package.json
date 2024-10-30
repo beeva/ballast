@@ -18,7 +18,9 @@
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
     "worker": "tsx scripts/run-worker.ts",
-    "worker:watch": "tsx scripts/run-worker.ts --watch"
+    "worker:watch": "tsx scripts/run-worker.ts --watch",
+    "alert-check": "tsx scripts/run-alert-check.ts",
+    "alert-check:watch": "tsx scripts/run-alert-check.ts --watch"
   },
   "dependencies": {
     "next": "^15.1.0",
