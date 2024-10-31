@@ -44,5 +44,6 @@ next-env.d.ts
 !.vscode/extensions.json
 .idea
 
-# build runner workspaces (real temp checkouts/artifacts created at runtime)
-/.ballast/workspaces
+# build runner workspaces + generated fixture repos (created at runtime by
+# the worker and the seed script - never committed)
+/.ballast/
