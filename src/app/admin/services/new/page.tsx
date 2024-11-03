@@ -1,0 +1,80 @@
+"use client";
+
+import { useActionState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { createService, type ActionState } from "../actions";
+
+const initialState: ActionState = {};
+
+export default function NewServicePage() {
+  const [state, formAction, pending] = useActionState(createService, initialState);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!pending && !state.error && state !== initialState) {
+      router.push("/admin/services");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-run when the action's result changes
+  }, [state, pending]);
+
+  return (
+    <div className="mx-auto max-w-xl">
+      <h1 className="font-display text-2xl text-iron-50">New service</h1>
+      <p className="mt-1 text-sm text-iron-400">
+        repoUrl can be a remote git URL or a local path `git clone` can reach.
+      </p>
+
+      <Card className="mt-6">
+        <CardTitle>Details</CardTitle>
+        <CardDescription className="mb-4">Every field maps directly to a build/deploy setting.</CardDescription>
+
+        <form action={formAction} className="flex flex-col gap-3">
+          <label className="flex flex-col gap-1 text-sm text-iron-300">
+            Name
+            <Input name="name" placeholder="Checkout API" required />
+          </label>
+          <label className="flex flex-col gap-1 text-sm text-iron-300">
+            Slug
+            <Input name="slug" placeholder="checkout-api" required />
+          </label>
+          <label className="flex flex-col gap-1 text-sm text-iron-300">
+            Repo URL
+            <Input name="repoUrl" placeholder="https://github.com/org/repo.git" required />
+          </label>
+          <label className="flex flex-col gap-1 text-sm text-iron-300">
+            Working directory
+            <Input name="workingDirectory" defaultValue="." required />
+          </label>
+          <label className="flex flex-col gap-1 text-sm text-iron-300">
+            Build command
+            <Input name="buildCommand" placeholder="npm run build" required />
+          </label>
+          <label className="flex flex-col gap-1 text-sm text-iron-300">
+            Start command
+            <Input name="startCommand" placeholder="npm start" required />
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex flex-col gap-1 text-sm text-iron-300">
+              CPU request (millicores)
+              <Input name="cpuRequestMilli" type="number" defaultValue={250} required />
+            </label>
+            <label className="flex flex-col gap-1 text-sm text-iron-300">
+              Memory request (MB)
+              <Input name="memoryRequestMb" type="number" defaultValue={512} required />
+            </label>
+          </div>
+
+          {state.error && <p className="text-sm text-red-400">{state.error}</p>}
+
+          <Button type="submit" disabled={pending} className="mt-1">
+            {pending ? "Creating..." : "Create service"}
+          </Button>
+        </form>
+      </Card>
+    </div>
+  );
+}
