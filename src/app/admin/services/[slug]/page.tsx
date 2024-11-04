@@ -1,0 +1,115 @@
+import { notFound } from "next/navigation";
+import {
+  getServiceBySlug,
+  getServiceBuildHistory,
+  getServiceDeployHistory,
+} from "@/lib/db/queries";
+import { estimateMonthlyCost } from "@/lib/cost/estimate";
+import { BUILD_STATUS_LABEL, BUILD_STATUS_TONE, isBuildStatus } from "@/lib/status";
+import { formatDuration, formatRelativeTime, truncate } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardTitle } from "@/components/ui/card";
+import { deployBuildAction, triggerBuild } from "../actions";
+
+export default async function ServiceDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const service = await getServiceBySlug(slug);
+  if (!service) notFound();
+
+  const [buildHistory, deployHistory] = await Promise.all([
+    getServiceBuildHistory(service.id),
+    getServiceDeployHistory(service.id),
+  ]);
+
+  const activeDeploy = deployHistory.find((d) => d.status === "active");
+  const cost = estimateMonthlyCost(service.cpuRequestMilli, service.memoryRequestMb);
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-2xl text-iron-50">{service.name}</h1>
+          <p className="mt-1 font-mono text-sm text-iron-400">{service.slug}</p>
+        </div>
+        <form action={triggerBuild.bind(null, service.id)}>
+          <Button type="submit">Trigger build</Button>
+        </form>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <Card>
+          <p className="text-sm text-iron-400">Build command</p>
+          <p className="mt-1 font-mono text-sm text-iron-100">{service.buildCommand}</p>
+        </Card>
+        <Card>
+          <p className="text-sm text-iron-400">Resource request</p>
+          <p className="mt-1 text-sm text-iron-100">
+            {(service.cpuRequestMilli / 1000).toFixed(2)} vCPU · {service.memoryRequestMb} MB
+          </p>
+        </Card>
+        <Card>
+          <p className="text-sm text-iron-400">Est. monthly cost</p>
+          <p className="mt-1 font-mono text-sm text-iron-100">${cost.totalUsd.toFixed(2)}</p>
+        </Card>
+      </div>
+
+      <Card>
+        <CardTitle>Builds</CardTitle>
+        {buildHistory.length === 0 ? (
+          <p className="mt-3 text-sm text-iron-400">No builds yet.</p>
+        ) : (
+          <ul className="mt-4 flex flex-col gap-3">
+            {buildHistory.map((build) => {
+              const status = isBuildStatus(build.status) ? build.status : "queued";
+              const isActive = activeDeploy?.buildId === build.id;
+              return (
+                <li key={build.id} className="flex flex-col gap-2 border-b border-iron-800 pb-3 last:border-0 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3">
+                    <Badge tone={BUILD_STATUS_TONE[status]}>{BUILD_STATUS_LABEL[status]}</Badge>
+                    {isActive && <Badge tone="copper">live</Badge>}
+                    <span className="font-mono text-xs text-iron-500">{truncate(build.id, 8)}</span>
+                    <span className="text-xs text-iron-500">
+                      {formatRelativeTime(build.queuedAt)}
+                      {build.durationMs !== null ? ` · ${formatDuration(build.durationMs)}` : ""}
+                    </span>
+                  </div>
+                  {status === "success" && !isActive && (
+                    <form action={deployBuildAction.bind(null, service.id, build.id)}>
+                      <Button size="sm" variant="outline" type="submit">
+                        Deploy this build
+                      </Button>
+                    </form>
+                  )}
+                  {build.errorMessage && <p className="text-xs text-red-400">{build.errorMessage}</p>}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Card>
+
+      <Card>
+        <CardTitle>Deploy history</CardTitle>
+        {deployHistory.length === 0 ? (
+          <p className="mt-3 text-sm text-iron-400">No deploys yet.</p>
+        ) : (
+          <ul className="mt-4 flex flex-col gap-2">
+            {deployHistory.map((deploy) => (
+              <li key={deploy.id} className="flex items-center justify-between gap-3 text-sm">
+                <div className="flex items-center gap-3">
+                  <Badge tone={deploy.status === "active" ? "moss" : "neutral"}>{deploy.status}</Badge>
+                  {deploy.isRollback && <Badge tone="copper">rollback</Badge>}
+                  <span className="font-mono text-xs text-iron-500">build {truncate(deploy.buildId, 8)}</span>
+                </div>
+                <span className="text-iron-500">
+                  {deploy.deployedBy} · {formatRelativeTime(deploy.deployedAt)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+    </div>
+  );
+}
