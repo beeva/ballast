@@ -42,6 +42,10 @@ export async function getDashboardSummary() {
   };
 }
 
+export async function listServices() {
+  return db.select().from(services).orderBy(services.name);
+}
+
 export async function listServicesWithActiveDeploy() {
   const allServices = await db.select().from(services).orderBy(services.name);
 
@@ -101,4 +105,26 @@ export async function getFiringAlertForRule(alertRuleId: string) {
     .from(alertEvents)
     .where(and(eq(alertEvents.alertRuleId, alertRuleId), eq(alertEvents.status, "firing")));
   return event ?? null;
+}
+
+export async function listAlertRulesWithStatus() {
+  const rules = await db
+    .select({
+      id: alertRules.id,
+      serviceId: alertRules.serviceId,
+      serviceName: services.name,
+      serviceSlug: services.slug,
+      metricName: alertRules.metricName,
+      comparator: alertRules.comparator,
+      threshold: alertRules.threshold,
+      windowMinutes: alertRules.windowMinutes,
+    })
+    .from(alertRules)
+    .innerJoin(services, eq(alertRules.serviceId, services.id))
+    .orderBy(services.name, alertRules.metricName);
+
+  const firingEvents = await db.select().from(alertEvents).where(eq(alertEvents.status, "firing"));
+  const firingByRule = new Map(firingEvents.map((e) => [e.alertRuleId, e]));
+
+  return rules.map((rule) => ({ ...rule, firingEvent: firingByRule.get(rule.id) ?? null }));
 }
