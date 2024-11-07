@@ -1,13 +1,27 @@
+import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
+import { Hero } from "@/components/marketing/hero";
+import { MetricsBand } from "@/components/marketing/metrics-band";
+import { HowItWorks } from "@/components/marketing/how-it-works";
+import { Features } from "@/components/marketing/features";
+import { TechStack } from "@/components/marketing/tech-stack";
+import { CTABand } from "@/components/marketing/cta-band";
+import { JsonLd } from "@/components/json-ld";
+
 export default function HomePage() {
   return (
-    <main className="container-page flex min-h-[70vh] flex-col items-center justify-center gap-6 py-24 text-center">
-      <h1 className="font-display text-4xl font-medium text-iron-50 sm:text-5xl">
-        <span className="text-gradient">Ballast</span> is under construction
-      </h1>
-      <p className="max-w-xl text-iron-300">
-        The build runner, deploy pipeline, and observability dashboard are being built in public —
-        check back soon.
-      </p>
-    </main>
+    <>
+      <JsonLd />
+      <Navbar />
+      <main>
+        <Hero />
+        <MetricsBand />
+        <HowItWorks />
+        <Features />
+        <TechStack />
+        <CTABand />
+      </main>
+      <Footer />
+    </>
   );
 }
