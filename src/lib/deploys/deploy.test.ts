@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { builds, deploys } from "@/lib/db/schema";
+import { builds, deploys, services } from "@/lib/db/schema";
 import { deployBuild, type Db } from "./deploy";
 
 type Call =
@@ -7,15 +7,17 @@ type Call =
   | { op: "insert"; table: unknown; values: Record<string, unknown> };
 
 let calls: Call[] = [];
+let service: Record<string, unknown> | null = { id: "svc-1" };
 let build: Record<string, unknown> | null = null;
 let priorDeploysOfThisBuild: Record<string, unknown>[] = [];
 let insertedId = "new-deploy-id";
 
 function makeFakeDb(): Db {
-  return {
+  const db = {
     select: () => ({
       from: (table: unknown) => ({
         where: () => {
+          if (table === services) return { for: () => Promise.resolve(service ? [service] : []) };
           if (table === builds) return Promise.resolve(build ? [build] : []);
           if (table === deploys) return Promise.resolve(priorDeploysOfThisBuild);
           throw new Error("unexpected table in select()");
@@ -38,15 +40,28 @@ function makeFakeDb(): Db {
         },
       }),
     }),
-  } as unknown as Db;
+    transaction: (fn: (tx: Db) => Promise<unknown>) => fn(db as unknown as Db),
+  };
+  return db as unknown as Db;
 }
 
 describe("deployBuild", () => {
   beforeEach(() => {
     calls = [];
+    service = { id: "svc-1" };
     build = null;
     priorDeploysOfThisBuild = [];
     insertedId = "new-deploy-id";
+  });
+
+  it("rejects a service that doesn't exist", async () => {
+    service = null;
+    const result = await deployBuild(makeFakeDb(), {
+      serviceId: "missing-svc",
+      buildId: "build-1",
+      deployedBy: "admin@example.com",
+    });
+    expect(result).toEqual({ ok: false, error: "Service not found." });
   });
 
   it("rejects a build that doesn't exist", async () => {
