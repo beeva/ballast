@@ -16,7 +16,7 @@ let queuedBuild: Record<string, unknown> | null = null;
 let service: Record<string, unknown> | null = null;
 
 function makeFakeDb(): Db {
-  return {
+  const db = {
     select: () => ({
       from: (table: unknown) => {
         calls.push({ op: "select", table });
@@ -24,7 +24,9 @@ function makeFakeDb(): Db {
           return {
             where: () => ({
               orderBy: () => ({
-                limit: () => Promise.resolve(queuedBuild ? [queuedBuild] : []),
+                limit: () => ({
+                  for: () => Promise.resolve(queuedBuild ? [queuedBuild] : []),
+                }),
               }),
             }),
           };
@@ -39,11 +41,14 @@ function makeFakeDb(): Db {
       set: (values: Record<string, unknown>) => ({
         where: () => {
           calls.push({ op: "update", table, values });
-          return Promise.resolve();
+          const rows = table === builds && queuedBuild ? [{ ...queuedBuild, ...values }] : [];
+          return { returning: () => Promise.resolve(rows), then: (resolve: (v: undefined) => void) => resolve(undefined) };
         },
       }),
     }),
-  } as unknown as Db;
+    transaction: (fn: (tx: Db) => Promise<unknown>) => fn(db as unknown as Db),
+  };
+  return db as unknown as Db;
 }
 
 describe("processNextQueuedBuild", () => {
@@ -113,7 +118,8 @@ describe("processNextQueuedBuild", () => {
     expect(runBuildMock).not.toHaveBeenCalled();
 
     const updates = calls.filter((c): c is Call & { op: "update" } => c.op === "update");
-    expect(updates).toHaveLength(1);
-    expect(updates[0]?.values).toMatchObject({ status: "failed" });
+    expect(updates).toHaveLength(2);
+    expect(updates[0]?.values).toMatchObject({ status: "running" });
+    expect(updates[1]?.values).toMatchObject({ status: "failed" });
   });
 });

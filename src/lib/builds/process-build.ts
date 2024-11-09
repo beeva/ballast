@@ -16,15 +16,32 @@ export type ProcessResult =
   | { processed: true; buildId: string; serviceSlug: string; success: boolean; durationMs?: number };
 
 /**
- * Claims and runs the single oldest queued build, if any. Returns enough
- * about what happened for the caller's poll loop to log real progress
- * instead of staying silent until the queue empties out. Marks the build
- * `running` before doing anything else, so a worker crash mid-build leaves
- * a build stuck in `running` rather than silently re-queued and re-run
- * from scratch.
+ * Claims and runs the single oldest queued build, if any. The claim itself
+ * (select the oldest queued row, mark it running) happens inside one
+ * transaction with `FOR UPDATE SKIP LOCKED`, so two worker processes
+ * polling at once can never both pick up the same build - the loser's
+ * SELECT simply skips the locked row and finds nothing (or the next one).
+ * Returns enough about what happened for the caller's poll loop to log
+ * real progress instead of staying silent until the queue empties out.
  */
 export async function processNextQueuedBuild(db: Db, workspaceRoot: string): Promise<ProcessResult> {
-  const [build] = await db.select().from(builds).where(eq(builds.status, "queued")).orderBy(asc(builds.queuedAt)).limit(1);
+  const build = await db.transaction(async (tx) => {
+    const [queued] = await tx
+      .select()
+      .from(builds)
+      .where(eq(builds.status, "queued"))
+      .orderBy(asc(builds.queuedAt))
+      .limit(1)
+      .for("update", { skipLocked: true });
+    if (!queued) return null;
+
+    const [claimed] = await tx
+      .update(builds)
+      .set({ status: "running", startedAt: new Date() })
+      .where(eq(builds.id, queued.id))
+      .returning();
+    return claimed ?? null;
+  });
   if (!build) return { processed: false };
 
   const [service] = await db.select().from(services).where(eq(services.id, build.serviceId));
@@ -39,9 +56,6 @@ export async function processNextQueuedBuild(db: Db, workspaceRoot: string): Pro
       .where(eq(builds.id, build.id));
     return { processed: true, buildId: build.id, serviceSlug: "(deleted service)", success: false };
   }
-
-  const startedAt = new Date();
-  await db.update(builds).set({ status: "running", startedAt }).where(eq(builds.id, build.id));
 
   const result = await runBuild({
     repoUrl: service.repoUrl,
