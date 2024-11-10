@@ -41,8 +41,11 @@ export async function runBuild(options: RunBuildOptions): Promise<BuildResult> {
     await fs.rm(options.workspaceDir, { recursive: true, force: true });
     await fs.mkdir(options.workspaceDir, { recursive: true });
 
-    log(`$ git clone --depth 1 ${options.repoUrl} .`);
-    const cloneResult = await runCommand("git", ["clone", "--depth", "1", options.repoUrl, "."], {
+    log(`$ git clone --depth 1 -- ${options.repoUrl} .`);
+    // The `--` stops git from parsing repoUrl as a flag - without it, a
+    // repoUrl of e.g. "--upload-pack=..." would be interpreted as an
+    // option, not a repository to clone.
+    const cloneResult = await runCommand("git", ["clone", "--depth", "1", "--", options.repoUrl, "."], {
       cwd: options.workspaceDir,
       timeoutMs,
     });

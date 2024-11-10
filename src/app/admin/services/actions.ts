@@ -12,7 +12,9 @@ const slugPattern = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const createServiceSchema = z.object({
   name: z.string().min(1).max(120),
   slug: z.string().min(1).max(120).regex(slugPattern, "Use lowercase letters, numbers, and hyphens only."),
-  repoUrl: z.string().min(1),
+  repoUrl: z.string().min(1).refine((v) => !v.startsWith("-"), {
+    message: "Repo URL can't start with a hyphen.",
+  }),
   buildCommand: z.string().min(1),
   startCommand: z.string().min(1),
   workingDirectory: z.string().min(1).default("."),
