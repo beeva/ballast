@@ -5,6 +5,7 @@ import { z } from "zod";
 import { db } from "@/lib/db/client";
 import { alertRules } from "@/lib/db/schema";
 import { isComparator } from "@/lib/alerts/threshold";
+import { requireAdmin } from "@/lib/auth/current-admin";
 
 const createAlertRuleSchema = z.object({
   serviceId: z.string().uuid(),
@@ -19,6 +20,8 @@ export interface ActionState {
 }
 
 export async function createAlertRule(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  await requireAdmin();
+
   const parsed = createAlertRuleSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input." };

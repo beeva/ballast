@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db/client";
 import { builds, services } from "@/lib/db/schema";
-import { getCurrentAdmin } from "@/lib/auth/current-admin";
+import { requireAdmin } from "@/lib/auth/current-admin";
 import { deployBuild } from "@/lib/deploys/deploy";
 
 const slugPattern = /^[a-z0-9]+(-[a-z0-9]+)*$/;
@@ -25,6 +25,8 @@ export interface ActionState {
 }
 
 export async function createService(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  await requireAdmin();
+
   const parsed = createServiceSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
@@ -44,6 +46,7 @@ export async function createService(_prevState: ActionState, formData: FormData)
 }
 
 export async function triggerBuild(serviceId: string): Promise<void> {
+  await requireAdmin();
   await db.insert(builds).values({ serviceId, status: "queued" });
   revalidatePath(`/admin/services`);
 }
@@ -59,11 +62,11 @@ export async function triggerBuild(serviceId: string): Promise<void> {
  * amount of handling for that.
  */
 export async function deployBuildAction(serviceId: string, buildId: string): Promise<void> {
-  const admin = await getCurrentAdmin();
+  const admin = await requireAdmin();
   const result = await deployBuild(db, {
     serviceId,
     buildId,
-    deployedBy: admin?.email ?? "unknown",
+    deployedBy: admin.email,
   });
   revalidatePath("/admin/services");
   if (!result.ok) throw new Error(result.error);
