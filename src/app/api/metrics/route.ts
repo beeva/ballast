@@ -2,14 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db/client";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { ingestMetrics, ingestRequestSchema } from "@/lib/metrics/ingest";
+import { isValidIngestKey } from "@/lib/metrics/auth";
 
 /**
- * Accepts a single metric point or a batch (array) of up to 500. Rate
- * limited per client IP - this is an unauthenticated ingestion endpoint by
- * design (a metrics agent shouldn't need a session), so it's the one thing
- * standing between it and being trivially hammered.
+ * Accepts a single metric point or a batch (array) of up to 500. Doesn't
+ * use the admin session cookie (a metrics agent shouldn't need to sign in
+ * interactively) - instead a shared-secret Authorization header, checked
+ * before rate limiting and before touching the request body, so a wrong
+ * key never gets to consume rate-limit budget or trigger JSON parsing.
  */
 export async function POST(request: NextRequest) {
+  if (!isValidIngestKey(request.headers.get("authorization"))) {
+    return NextResponse.json({ error: "Missing or invalid API key." }, { status: 401 });
+  }
+
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   const rateLimit = checkRateLimit(`metrics-ingest:${ip}`, { limit: 120, windowMs: 60_000 });
   if (!rateLimit.allowed) {

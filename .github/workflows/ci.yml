@@ -30,6 +30,7 @@ jobs:
     env:
       DATABASE_URL: postgres://ballast:ballast@localhost:5432/ballast
       SESSION_SECRET: ci-only-secret-not-used-in-production
+      METRICS_INGEST_KEY: ci-only-key-not-used-in-production
     steps:
       - uses: actions/checkout@v4
 

@@ -28,6 +28,7 @@ const OPERATIONS: Array<{ title: string; text: string }> = [
 ];
 
 const SNIPPET = `curl -X POST https://your-ballast-domain.example/api/metrics \\
+  -H "Authorization: Bearer $METRICS_INGEST_KEY" \\
   -H "Content-Type: application/json" \\
   -d '[
     {"serviceSlug":"checkout-api","metricName":"latency_ms","value":142},
@@ -58,7 +59,9 @@ export default function DocsPage() {
           <p className="mt-2 max-w-2xl text-sm text-iron-300">
             <code className="rounded bg-iron-800 px-1.5 py-0.5">POST /api/metrics</code> accepts a single
             point or a batch of up to 500. A batch with even one unknown service slug fails the whole
-            request - a typo&apos;d slug shouldn&apos;t silently vanish.
+            request - a typo&apos;d slug shouldn&apos;t silently vanish. Requires an{" "}
+            <code className="rounded bg-iron-800 px-1.5 py-0.5">Authorization: Bearer</code> header
+            matching the deployment&apos;s <code className="rounded bg-iron-800 px-1.5 py-0.5">METRICS_INGEST_KEY</code>.
           </p>
           <pre className="scrollbar-thin mt-4 max-w-2xl overflow-x-auto rounded-lg bg-iron-950 p-4 font-mono text-sm text-copper-400">
             {SNIPPET}
