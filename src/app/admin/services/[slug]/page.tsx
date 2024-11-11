@@ -3,24 +3,33 @@ import {
   getServiceBySlug,
   getServiceBuildHistory,
   getServiceDeployHistory,
+  getRecentMetrics,
 } from "@/lib/db/queries";
 import { estimateMonthlyCost } from "@/lib/cost/estimate";
 import { BUILD_STATUS_LABEL, BUILD_STATUS_TONE, isBuildStatus } from "@/lib/status";
 import { formatDuration, formatRelativeTime, truncate } from "@/lib/utils";
+import { groupMetricsByName } from "@/lib/metrics/group";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { deployBuildAction, triggerBuild } from "../actions";
+
+// Trend direction alone doesn't say whether a metric is a "good" or "bad"
+// one to see rising (throughput vs. error rate) - so this is a neutral
+// glyph, not a red/green good/bad judgment.
+const TREND_GLYPH: Record<"up" | "down" | "flat", string> = { up: "▲", down: "▼", flat: "▬" };
 
 export default async function ServiceDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const service = await getServiceBySlug(slug);
   if (!service) notFound();
 
-  const [buildHistory, deployHistory] = await Promise.all([
+  const [buildHistory, deployHistory, recentMetricRows] = await Promise.all([
     getServiceBuildHistory(service.id),
     getServiceDeployHistory(service.id),
+    getRecentMetrics(service.id),
   ]);
+  const metricGroups = groupMetricsByName(recentMetricRows);
 
   const activeDeploy = deployHistory.find((d) => d.status === "active");
   const cost = estimateMonthlyCost(service.cpuRequestMilli, service.memoryRequestMb);
@@ -53,6 +62,31 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
           <p className="mt-1 font-mono text-sm text-iron-100">${cost.totalUsd.toFixed(2)}</p>
         </Card>
       </div>
+
+      <Card>
+        <CardTitle>Recent metrics</CardTitle>
+        {metricGroups.length === 0 ? (
+          <p className="mt-3 text-sm text-iron-400">
+            No metrics reported yet - see the docs page for how to send some via POST /api/metrics.
+          </p>
+        ) : (
+          <ul className="mt-4 flex flex-col gap-3">
+            {metricGroups.map((group) => (
+              <li key={group.metricName} className="flex flex-col gap-1 border-b border-iron-800 pb-3 last:border-0 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-sm text-iron-100">{group.metricName}</span>
+                  <span className="font-mono text-sm text-copper-400">{group.latestValue}</span>
+                  {group.trend && <span className="text-xs text-iron-500">{TREND_GLYPH[group.trend]}</span>}
+                </div>
+                <div className="flex items-center gap-3 text-xs text-iron-500">
+                  <span className="font-mono">{group.recentValues.slice(1).reverse().join(" · ") || "no prior points"}</span>
+                  <span>{formatRelativeTime(group.latestRecordedAt)}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
 
       <Card>
         <CardTitle>Builds</CardTitle>

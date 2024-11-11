@@ -1,7 +1,7 @@
 import "server-only";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "./client";
-import { adminUsers, alertEvents, alertRules, builds, deploys, services } from "./schema";
+import { adminUsers, alertEvents, alertRules, builds, deploys, metrics, services } from "./schema";
 import { estimateFleetMonthlyCost, estimateMonthlyCost } from "@/lib/cost/estimate";
 
 export async function getAdminByEmail(email: string) {
@@ -92,6 +92,20 @@ export async function getServiceDeployHistory(serviceId: string, limit = 20) {
     .innerJoin(builds, eq(deploys.buildId, builds.id))
     .where(eq(deploys.serviceId, serviceId))
     .orderBy(desc(deploys.deployedAt))
+    .limit(limit);
+}
+
+/**
+ * Recent raw points across all of a service's metrics, newest first. Capped
+ * generously (default 300) since it's grouped by metric name for display,
+ * not charted point-by-point - see groupMetricsByName.
+ */
+export async function getRecentMetrics(serviceId: string, limit = 300) {
+  return db
+    .select({ metricName: metrics.metricName, value: metrics.value, recordedAt: metrics.recordedAt })
+    .from(metrics)
+    .where(eq(metrics.serviceId, serviceId))
+    .orderBy(desc(metrics.recordedAt))
     .limit(limit);
 }
 
