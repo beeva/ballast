@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   getServiceBySlug,
@@ -102,7 +103,12 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
                   <div className="flex items-center gap-3">
                     <Badge tone={BUILD_STATUS_TONE[status]}>{BUILD_STATUS_LABEL[status]}</Badge>
                     {isActive && <Badge tone="copper">live</Badge>}
-                    <span className="font-mono text-xs text-iron-500">{truncate(build.id, 8)}</span>
+                    <Link
+                      href={`/admin/services/${service.slug}/builds/${build.id}`}
+                      className="font-mono text-xs text-copper-400 hover:underline"
+                    >
+                      {truncate(build.id, 8)}
+                    </Link>
                     <span className="text-xs text-iron-500">
                       {formatRelativeTime(build.queuedAt)}
                       {build.durationMs !== null ? ` · ${formatDuration(build.durationMs)}` : ""}

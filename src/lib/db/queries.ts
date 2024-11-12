@@ -77,6 +77,28 @@ export async function getServiceBuildHistory(serviceId: string, limit = 20) {
   return db.select().from(builds).where(eq(builds.serviceId, serviceId)).orderBy(desc(builds.queuedAt)).limit(limit);
 }
 
+export async function getBuildById(buildId: string) {
+  const [row] = await db
+    .select({
+      id: builds.id,
+      status: builds.status,
+      commitRef: builds.commitRef,
+      logs: builds.logs,
+      errorMessage: builds.errorMessage,
+      queuedAt: builds.queuedAt,
+      startedAt: builds.startedAt,
+      finishedAt: builds.finishedAt,
+      durationMs: builds.durationMs,
+      serviceId: services.id,
+      serviceName: services.name,
+      serviceSlug: services.slug,
+    })
+    .from(builds)
+    .innerJoin(services, eq(builds.serviceId, services.id))
+    .where(eq(builds.id, buildId));
+  return row ?? null;
+}
+
 export async function getServiceDeployHistory(serviceId: string, limit = 20) {
   return db
     .select({
