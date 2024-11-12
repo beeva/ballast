@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db/client";
 import { alertRules } from "@/lib/db/schema";
@@ -37,4 +38,17 @@ export async function createAlertRule(_prevState: ActionState, formData: FormDat
 
   revalidatePath("/admin/alerts");
   return {};
+}
+
+/**
+ * Bound to a plain `<form action={...}>` per rule row, so - like
+ * deployBuildAction - it returns void and throws on failure rather than an
+ * ActionState. Deleting a rule cascades to its alertEvents (including any
+ * currently-firing one), which is the schema's declared behavior, not a
+ * special case handled here.
+ */
+export async function deleteAlertRule(ruleId: string): Promise<void> {
+  await requireAdmin();
+  await db.delete(alertRules).where(eq(alertRules.id, ruleId));
+  revalidatePath("/admin/alerts");
 }

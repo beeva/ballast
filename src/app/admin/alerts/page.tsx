@@ -2,8 +2,10 @@ import Link from "next/link";
 import { listAlertRulesWithStatus, listServices } from "@/lib/db/queries";
 import { formatRelativeTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { NewAlertRuleForm } from "./new-alert-rule-form";
+import { deleteAlertRule } from "./actions";
 
 const COMPARATOR_LABEL: Record<string, string> = {
   gt: "is above",
@@ -43,16 +45,23 @@ export default async function AdminAlertsPage() {
                       {rule.windowMinutes}m
                     </p>
                   </div>
-                  {rule.firingEvent ? (
-                    <div className="text-right">
-                      <Badge tone="danger">firing</Badge>
-                      <p className="mt-1 text-xs text-iron-500">
-                        since {formatRelativeTime(rule.firingEvent.triggeredAt)}
-                      </p>
-                    </div>
-                  ) : (
-                    <Badge tone="moss">healthy</Badge>
-                  )}
+                  <div className="flex items-center gap-3">
+                    {rule.firingEvent ? (
+                      <div className="text-right">
+                        <Badge tone="danger">firing</Badge>
+                        <p className="mt-1 text-xs text-iron-500">
+                          since {formatRelativeTime(rule.firingEvent.triggeredAt)}
+                        </p>
+                      </div>
+                    ) : (
+                      <Badge tone="moss">healthy</Badge>
+                    )}
+                    <form action={deleteAlertRule.bind(null, rule.id)}>
+                      <Button size="sm" variant="outline" type="submit">
+                        Delete
+                      </Button>
+                    </form>
+                  </div>
                 </div>
               </Card>
             ))
