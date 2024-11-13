@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db/client";
 import { builds, services } from "@/lib/db/schema";
@@ -44,6 +45,36 @@ export async function createService(_prevState: ActionState, formData: FormData)
   }
 
   revalidatePath("/admin/services");
+  return {};
+}
+
+const updateServiceSchema = createServiceSchema.omit({ name: true, slug: true });
+
+/**
+ * name and slug aren't editable here - slug is how builds/deploys and the
+ * public URL path both reference a service, so renaming it would either
+ * break existing links or require a migration step this form doesn't do.
+ * Renaming would need its own deliberate flow, not a field on this one.
+ */
+export async function updateService(
+  serviceId: string,
+  serviceSlug: string,
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  await requireAdmin();
+
+  const parsed = updateServiceSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+  }
+
+  await db
+    .update(services)
+    .set({ ...parsed.data, updatedAt: new Date() })
+    .where(eq(services.id, serviceId));
+
+  revalidatePath(`/admin/services/${serviceSlug}`);
   return {};
 }
 

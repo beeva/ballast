@@ -11,7 +11,7 @@ import { BUILD_STATUS_LABEL, BUILD_STATUS_TONE, isBuildStatus } from "@/lib/stat
 import { formatDuration, formatRelativeTime, truncate } from "@/lib/utils";
 import { groupMetricsByName } from "@/lib/metrics/group";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, LinkButton } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { deployBuildAction, triggerBuild } from "../actions";
 
@@ -42,9 +42,14 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
           <h1 className="font-display text-2xl text-iron-50">{service.name}</h1>
           <p className="mt-1 font-mono text-sm text-iron-400">{service.slug}</p>
         </div>
-        <form action={triggerBuild.bind(null, service.id)}>
-          <Button type="submit">Trigger build</Button>
-        </form>
+        <div className="flex items-center gap-2">
+          <LinkButton href={`/admin/services/${service.slug}/edit`} variant="outline">
+            Edit
+          </LinkButton>
+          <form action={triggerBuild.bind(null, service.id)}>
+            <Button type="submit">Trigger build</Button>
+          </form>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
