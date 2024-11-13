@@ -131,6 +131,26 @@ export async function getRecentMetrics(serviceId: string, limit = 300) {
     .limit(limit);
 }
 
+/**
+ * Public-facing health per service: just a name and whether it currently
+ * has any firing alert - no build/deploy internals, which a status page
+ * has no business exposing to an unauthenticated visitor.
+ */
+export async function getServiceHealthSummary() {
+  const allServices = await db.select({ id: services.id, name: services.name, slug: services.slug }).from(services);
+
+  const firingByService = await db
+    .select({ serviceId: alertEvents.serviceId, count: sql<number>`count(*)::int` })
+    .from(alertEvents)
+    .where(eq(alertEvents.status, "firing"))
+    .groupBy(alertEvents.serviceId);
+  const firingCountByService = new Map(firingByService.map((row) => [row.serviceId, row.count]));
+
+  return allServices
+    .map((service) => ({ ...service, firingAlertCount: firingCountByService.get(service.id) ?? 0 }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 export async function getServiceAlertRules(serviceId: string) {
   return db.select().from(alertRules).where(eq(alertRules.serviceId, serviceId));
 }

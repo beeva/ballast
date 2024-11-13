@@ -12,6 +12,9 @@ export function Footer() {
           <Link href="/docs" className="hover:text-iron-100">
             Docs
           </Link>
+          <Link href="/status" className="hover:text-iron-100">
+            Status
+          </Link>
           <Link href="/#features" className="hover:text-iron-100">
             Features
           </Link>
