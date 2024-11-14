@@ -2,7 +2,7 @@
 
 A deployment and observability control plane — declare a service, push a build, watch it ship through a real pipeline with a rehearsed rollback, and keep an eye on it with metrics, alerts, and a cost estimate that doesn't wait for the invoice to surprise you.
 
-> Status: the build runner, deploy/rollback, metrics/alerting, cost estimator, and admin dashboard are all built and verified against a real Postgres instance and real git/npm builds. Marketing site and CI still to come. See the [roadmap](#roadmap) below.
+> Status: the build runner, deploy/rollback, metrics/alerting API-key-gated ingestion, cost estimator, admin dashboard (with build log viewer, service editing, and alert management), public status page, marketing site, docs, and CI are all built and verified against a real Postgres instance and real git/npm builds. See [CHANGELOG.md](./CHANGELOG.md) for the full list.
 
 ## Why
 
@@ -25,11 +25,12 @@ Most of the pain in running software isn't the code, it's everything around it: 
 
 - [x] Build runner (real command execution, isolated workspace, captured logs)
 - [x] Service manifests + deploy/rollback on build history
-- [x] Metrics ingestion + alert rule evaluation
+- [x] Metrics ingestion (API-key gated) + alert rule evaluation
 - [x] Cost estimator
-- [x] Admin dashboard
-- [ ] Marketing site
-- [ ] CI
+- [x] Admin dashboard (build log viewer, service editing, alert rule management)
+- [x] Public status page
+- [x] Marketing site + docs
+- [x] CI
 
 ## License
 
