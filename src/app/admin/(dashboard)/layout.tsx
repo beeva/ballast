@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getCurrentAdmin } from "@/lib/auth/current-admin";
 import { AdminSidebarNav } from "@/components/admin/admin-sidebar-nav";
 import { AdminMobileNav } from "@/components/admin/admin-mobile-nav";
-import { logout } from "./login/actions";
+import { logout } from "../login/actions";
 
 // The whole /admin subtree reads live, auth-gated data - never statically
 // prerendered, and never dependent on a database connection at build time.
