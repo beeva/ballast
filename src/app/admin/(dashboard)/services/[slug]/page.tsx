@@ -13,7 +13,7 @@ import { groupMetricsByName } from "@/lib/metrics/group";
 import { Badge } from "@/components/ui/badge";
 import { Button, LinkButton } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
-import { deployBuildAction, triggerBuild } from "../actions";
+import { cancelQueuedBuild, deployBuildAction, triggerBuild } from "../actions";
 import { DeleteServiceButton } from "./delete-service-button";
 
 // Trend direction alone doesn't say whether a metric is a "good" or "bad"
@@ -121,13 +121,29 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
                       {build.durationMs !== null ? ` · ${formatDuration(build.durationMs)}` : ""}
                     </span>
                   </div>
-                  {status === "success" && !isActive && (
-                    <form action={deployBuildAction.bind(null, service.id, build.id)}>
-                      <Button size="sm" variant="outline" type="submit">
-                        Deploy this build
-                      </Button>
-                    </form>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {status === "success" && !isActive && (
+                      <form action={deployBuildAction.bind(null, service.id, build.id)}>
+                        <Button size="sm" variant="outline" type="submit">
+                          Deploy this build
+                        </Button>
+                      </form>
+                    )}
+                    {status === "failed" && (
+                      <form action={triggerBuild.bind(null, service.id)}>
+                        <Button size="sm" variant="outline" type="submit">
+                          Retry
+                        </Button>
+                      </form>
+                    )}
+                    {status === "queued" && (
+                      <form action={cancelQueuedBuild.bind(null, build.id)}>
+                        <Button size="sm" variant="outline" type="submit">
+                          Cancel
+                        </Button>
+                      </form>
+                    )}
+                  </div>
                   {build.errorMessage && <p className="text-xs text-red-400">{build.errorMessage}</p>}
                 </li>
               );

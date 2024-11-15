@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db/client";
 import { builds, services } from "@/lib/db/schema";
@@ -97,6 +97,24 @@ export async function triggerBuild(serviceId: string): Promise<void> {
   await requireAdmin();
   await db.insert(builds).values({ serviceId, status: "queued" });
   revalidatePath(`/admin/services`);
+}
+
+/**
+ * Only a queued build can be cancelled this way - a running build's
+ * subprocess is owned by the separate worker process (scripts/run-worker.ts),
+ * which this web request has no channel to signal, so "cancelling" it would
+ * just be a UI lie unless the worker cooperatively polled for it mid-build,
+ * which it doesn't. The status='queued' guard in the WHERE clause means a
+ * build the worker has already claimed (now 'running') is left alone rather
+ * than corrupted into a false "cancelled" state.
+ */
+export async function cancelQueuedBuild(buildId: string): Promise<void> {
+  await requireAdmin();
+  await db
+    .update(builds)
+    .set({ status: "failed", errorMessage: "cancelled before it started", finishedAt: new Date() })
+    .where(and(eq(builds.id, buildId), eq(builds.status, "queued")));
+  revalidatePath("/admin/services");
 }
 
 /**
