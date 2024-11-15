@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db/client";
@@ -76,6 +77,20 @@ export async function updateService(
 
   revalidatePath(`/admin/services/${serviceSlug}`);
   return {};
+}
+
+/**
+ * Cascades to the service's builds, deploys, metrics, and alert rules per
+ * the schema's declared ON DELETE CASCADE - verified directly against a
+ * real database that this doesn't trip the separate ON DELETE RESTRICT on
+ * deploys.buildId, since the referencing deploy row is removed in the same
+ * cascading delete, not left dangling.
+ */
+export async function deleteService(serviceId: string): Promise<void> {
+  await requireAdmin();
+  await db.delete(services).where(eq(services.id, serviceId));
+  revalidatePath("/admin/services");
+  redirect("/admin/services");
 }
 
 export async function triggerBuild(serviceId: string): Promise<void> {

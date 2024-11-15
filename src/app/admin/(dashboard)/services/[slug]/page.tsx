@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button, LinkButton } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { deployBuildAction, triggerBuild } from "../actions";
+import { DeleteServiceButton } from "./delete-service-button";
 
 // Trend direction alone doesn't say whether a metric is a "good" or "bad"
 // one to see rising (throughput vs. error rate) - so this is a neutral
@@ -49,6 +50,7 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
           <form action={triggerBuild.bind(null, service.id)}>
             <Button type="submit">Trigger build</Button>
           </form>
+          <DeleteServiceButton serviceId={service.id} serviceName={service.name} />
         </div>
       </div>
 
