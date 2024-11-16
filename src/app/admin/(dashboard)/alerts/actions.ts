@@ -14,6 +14,13 @@ const createAlertRuleSchema = z.object({
   comparator: z.string().refine(isComparator, { message: "Comparator must be one of gt, gte, lt, lte." }),
   threshold: z.coerce.number().finite(),
   windowMinutes: z.coerce.number().int().min(1).max(1440),
+  webhookUrl: z
+    .string()
+    .optional()
+    .transform((v) => (v && v.trim() !== "" ? v.trim() : null))
+    .refine((v) => v === null || /^https?:\/\//.test(v), {
+      message: "Webhook URL must start with http:// or https://.",
+    }),
 });
 
 export interface ActionState {
@@ -34,6 +41,7 @@ export async function createAlertRule(_prevState: ActionState, formData: FormDat
     comparator: parsed.data.comparator,
     threshold: String(parsed.data.threshold),
     windowMinutes: parsed.data.windowMinutes,
+    webhookUrl: parsed.data.webhookUrl,
   });
 
   revalidatePath("/admin/alerts");

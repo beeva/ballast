@@ -23,7 +23,7 @@ const OPERATIONS: Array<{ title: string; text: string }> = [
   },
   {
     title: "Alerting",
-    text: "An alert rule averages a metric over its own window and compares it to a threshold. The alert checker (npm run alert-check:watch) opens or resolves an incident to match - a still-breaching rule doesn't open a second one.",
+    text: "An alert rule averages a metric over its own window and compares it to a threshold. The alert checker (npm run alert-check:watch) opens or resolves an incident to match - a still-breaching rule doesn't open a second one. An optional webhook URL gets a real JSON POST (event, ruleId, serviceId, metricName, comparator, threshold, currentValue, occurredAt) on every fire and resolve.",
   },
 ];
 

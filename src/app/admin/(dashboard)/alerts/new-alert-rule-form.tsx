@@ -46,6 +46,10 @@ export function NewAlertRuleForm({ services }: { services: Array<{ id: string; n
         Window (minutes)
         <Input name="windowMinutes" type="number" defaultValue={5} required />
       </label>
+      <label className="flex flex-col gap-1 text-sm text-iron-300">
+        Webhook URL <span className="text-iron-500">(optional)</span>
+        <Input name="webhookUrl" type="url" placeholder="https://example.com/hooks/ballast" />
+      </label>
 
       {state.error && <p className="text-sm text-red-400">{state.error}</p>}
 

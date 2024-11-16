@@ -2,6 +2,7 @@ import { and, eq, gte } from "drizzle-orm";
 import type { db as DbClient } from "@/lib/db/client";
 import { alertEvents, alertRules, metrics } from "@/lib/db/schema";
 import { average, compareValue, isComparator } from "./threshold";
+import { sendAlertWebhook } from "./webhook";
 
 export type Db = typeof DbClient;
 
@@ -57,6 +58,18 @@ export async function evaluateAlertRule(
       status: "firing",
       triggerValue: String(currentValue),
     });
+    if (rule.webhookUrl) {
+      await sendAlertWebhook(rule.webhookUrl, {
+        event: "fired",
+        ruleId: rule.id,
+        serviceId: rule.serviceId,
+        metricName: rule.metricName,
+        comparator: rule.comparator,
+        threshold: Number(rule.threshold),
+        currentValue,
+        occurredAt: new Date().toISOString(),
+      });
+    }
     return { outcome: "fired", currentValue };
   }
 
@@ -65,6 +78,18 @@ export async function evaluateAlertRule(
       .update(alertEvents)
       .set({ status: "resolved", resolvedAt: new Date() })
       .where(eq(alertEvents.id, existingFiring.id));
+    if (rule.webhookUrl) {
+      await sendAlertWebhook(rule.webhookUrl, {
+        event: "resolved",
+        ruleId: rule.id,
+        serviceId: rule.serviceId,
+        metricName: rule.metricName,
+        comparator: rule.comparator,
+        threshold: Number(rule.threshold),
+        currentValue,
+        occurredAt: new Date().toISOString(),
+      });
+    }
     return { outcome: "resolved", currentValue };
   }
 

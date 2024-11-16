@@ -44,6 +44,9 @@ export default async function AdminAlertsPage() {
                       <span className="font-mono">{Number(rule.threshold)}</span>, averaged over{" "}
                       {rule.windowMinutes}m
                     </p>
+                    {rule.webhookUrl && (
+                      <p className="mt-1 text-xs text-iron-500">notifies {rule.webhookUrl}</p>
+                    )}
                   </div>
                   <div className="flex items-center gap-3">
                     {rule.firingEvent ? (

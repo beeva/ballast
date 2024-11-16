@@ -133,6 +133,8 @@ export const alertRules = pgTable(
     comparator: varchar("comparator", { length: 4 }).notNull(), // gt | gte | lt | lte
     threshold: numeric("threshold", { precision: 20, scale: 6 }).notNull(),
     windowMinutes: integer("window_minutes").notNull().default(5),
+    /** Optional - if set, evaluateAlertRule POSTs a JSON payload here on fire/resolve. */
+    webhookUrl: text("webhook_url"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index("alert_rules_service_id_idx").on(table.serviceId)]

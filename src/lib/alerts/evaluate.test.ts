@@ -1,6 +1,11 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import { alertEvents, alertRules, metrics } from "@/lib/db/schema";
-import { evaluateAlertRule, type Db } from "./evaluate";
+
+const sendAlertWebhookMock = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+vi.mock("./webhook", () => ({ sendAlertWebhook: sendAlertWebhookMock }));
+
+const { evaluateAlertRule } = await import("./evaluate");
+type Db = Parameters<typeof evaluateAlertRule>[0];
 
 type Call =
   | { op: "insert"; table: unknown; values: Record<string, unknown> }
@@ -46,6 +51,7 @@ function makeRule(overrides: Partial<typeof alertRules.$inferSelect> = {}): type
     comparator: "gt",
     threshold: "5",
     windowMinutes: 5,
+    webhookUrl: null,
     createdAt: new Date(),
     ...overrides,
   };
@@ -56,6 +62,7 @@ describe("evaluateAlertRule", () => {
     calls = [];
     metricRows = [];
     firingEvent = null;
+    sendAlertWebhookMock.mockClear();
   });
 
   it("returns no-data and does nothing when the window is empty", async () => {
@@ -106,5 +113,40 @@ describe("evaluateAlertRule", () => {
   it("throws on a corrupted comparator instead of silently evaluating garbage", async () => {
     const rule = makeRule({ comparator: "invalid" as never });
     await expect(evaluateAlertRule(makeFakeDb(), rule)).rejects.toThrow(/invalid comparator/);
+  });
+
+  it("does not call the webhook when a rule has none configured", async () => {
+    metricRows = [{ value: "9" }];
+    await evaluateAlertRule(makeFakeDb(), makeRule());
+    expect(sendAlertWebhookMock).not.toHaveBeenCalled();
+  });
+
+  it("sends a 'fired' webhook when a rule with a webhookUrl newly breaches", async () => {
+    metricRows = [{ value: "9" }];
+    const rule = makeRule({ webhookUrl: "https://example.com/hook" });
+    await evaluateAlertRule(makeFakeDb(), rule);
+    expect(sendAlertWebhookMock).toHaveBeenCalledWith(
+      "https://example.com/hook",
+      expect.objectContaining({ event: "fired", ruleId: "rule-1", currentValue: 9 })
+    );
+  });
+
+  it("sends a 'resolved' webhook when a rule with a webhookUrl recovers", async () => {
+    metricRows = [{ value: "2" }];
+    firingEvent = { id: "existing-event" };
+    const rule = makeRule({ webhookUrl: "https://example.com/hook" });
+    await evaluateAlertRule(makeFakeDb(), rule);
+    expect(sendAlertWebhookMock).toHaveBeenCalledWith(
+      "https://example.com/hook",
+      expect.objectContaining({ event: "resolved", currentValue: 2 })
+    );
+  });
+
+  it("does not call the webhook when a still-breaching rule stays unchanged", async () => {
+    metricRows = [{ value: "9" }];
+    firingEvent = { id: "existing-event" };
+    const rule = makeRule({ webhookUrl: "https://example.com/hook" });
+    await evaluateAlertRule(makeFakeDb(), rule);
+    expect(sendAlertWebhookMock).not.toHaveBeenCalled();
   });
 });

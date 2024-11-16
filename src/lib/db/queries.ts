@@ -174,6 +174,7 @@ export async function listAlertRulesWithStatus() {
       comparator: alertRules.comparator,
       threshold: alertRules.threshold,
       windowMinutes: alertRules.windowMinutes,
+      webhookUrl: alertRules.webhookUrl,
     })
     .from(alertRules)
     .innerJoin(services, eq(alertRules.serviceId, services.id))
