@@ -58,6 +58,11 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
         <Card>
           <p className="text-sm text-iron-400">Build command</p>
           <p className="mt-1 font-mono text-sm text-iron-100">{service.buildCommand}</p>
+          {Object.keys(service.envVars).length > 0 && (
+            <p className="mt-2 text-xs text-iron-500">
+              {Object.keys(service.envVars).length} env var{Object.keys(service.envVars).length === 1 ? "" : "s"} declared
+            </p>
+          )}
         </Card>
         <Card>
           <p className="text-sm text-iron-400">Resource request</p>

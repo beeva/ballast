@@ -1,0 +1,9 @@
+{
+  "name": "env-var-service",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A real build that requires a declared env var - exercises Ballast's per-service env var passthrough end to end.",
+  "scripts": {
+    "build": "node build.js"
+  }
+}

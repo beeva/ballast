@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Input, Textarea } from "@/components/ui/input";
 import { createService, type ActionState } from "../actions";
 
 const initialState: ActionState = {};
@@ -56,6 +56,10 @@ export default function NewServicePage() {
           <label className="flex flex-col gap-1 text-sm text-iron-300">
             Start command
             <Input name="startCommand" placeholder="npm start" required />
+          </label>
+          <label className="flex flex-col gap-1 text-sm text-iron-300">
+            Env vars <span className="text-iron-500">(optional, one KEY=VALUE per line)</span>
+            <Textarea name="envVars" placeholder={"NODE_ENV=production\nAPI_BASE_URL=https://api.example.com"} />
           </label>
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1 text-sm text-iron-300">

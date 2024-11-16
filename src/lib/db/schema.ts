@@ -2,6 +2,7 @@ import {
   boolean,
   index,
   integer,
+  jsonb,
   numeric,
   pgTable,
   text,
@@ -36,6 +37,8 @@ export const services = pgTable("services", {
   buildCommand: text("build_command").notNull(),
   startCommand: text("start_command").notNull(),
   workingDirectory: text("working_directory").notNull().default("."),
+  /** Declared KEY=VALUE pairs passed to the build command's subprocess environment. */
+  envVars: jsonb("env_vars").notNull().default({}).$type<Record<string, string>>(),
   cpuRequestMilli: integer("cpu_request_milli").notNull().default(250),
   memoryRequestMb: integer("memory_request_mb").notNull().default(512),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

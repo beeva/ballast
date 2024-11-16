@@ -15,6 +15,13 @@
       "when": 1788017850167,
       "tag": "0001_add_alert_rules_webhook_url",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788018223004,
+      "tag": "0002_add_services_env_vars",
+      "breakpoints": true
     }
   ]
 }

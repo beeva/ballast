@@ -1,0 +1,1 @@
+ALTER TABLE "services" ADD COLUMN "env_vars" jsonb DEFAULT '{}'::jsonb NOT NULL;

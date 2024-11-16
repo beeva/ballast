@@ -10,6 +10,8 @@ export interface RunBuildOptions {
   workspaceDir: string;
   /** Hard ceiling on total build time. Real builds can hang; this guarantees the worker doesn't. */
   timeoutMs?: number;
+  /** Declared vars merged over process.env for the build command only - not the git clone step. */
+  env?: Record<string, string>;
 }
 
 export interface BuildResult {
@@ -64,6 +66,7 @@ export async function runBuild(options: RunBuildOptions): Promise<BuildResult> {
     const buildResult = await runShellCommand(options.buildCommand, {
       cwd: buildCwd,
       timeoutMs: timeoutMs - (Date.now() - startedAt),
+      env: options.env,
     });
     log(buildResult.output);
 
@@ -106,9 +109,13 @@ function runCommand(
   });
 }
 
-function runShellCommand(command: string, opts: { cwd: string; timeoutMs: number }): Promise<CommandResult> {
+function runShellCommand(
+  command: string,
+  opts: { cwd: string; timeoutMs: number; env?: Record<string, string> }
+): Promise<CommandResult> {
   return new Promise((resolve) => {
-    const child = spawn(command, { cwd: opts.cwd, shell: true, detached: process.platform !== "win32" });
+    const env = opts.env && Object.keys(opts.env).length > 0 ? { ...process.env, ...opts.env } : undefined;
+    const child = spawn(command, { cwd: opts.cwd, shell: true, detached: process.platform !== "win32", env });
     collectOutput(child, opts.timeoutMs, resolve);
   });
 }

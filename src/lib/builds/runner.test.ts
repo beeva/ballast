@@ -70,6 +70,39 @@ describe("runBuild", () => {
     expect(result.errorMessage).toBe("git clone failed");
   }, 30_000);
 
+  it("fails when a build command needs a declared env var that isn't passed", async () => {
+    const repoDir = await makeTmpDir();
+    await prepareFixtureRepo(path.join(FIXTURES_ROOT, "env-var-service"), repoDir);
+
+    const workspaceDir = path.join(await makeTmpDir(), "workspace");
+    const result = await runBuild({
+      repoUrl: repoDir,
+      buildCommand: "npm run build",
+      workingDirectory: ".",
+      workspaceDir,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.logs).toContain("missing required CONFIG_TOKEN");
+  }, 30_000);
+
+  it("actually passes declared env vars through to the real build subprocess", async () => {
+    const repoDir = await makeTmpDir();
+    await prepareFixtureRepo(path.join(FIXTURES_ROOT, "env-var-service"), repoDir);
+
+    const workspaceDir = path.join(await makeTmpDir(), "workspace");
+    const result = await runBuild({
+      repoUrl: repoDir,
+      buildCommand: "npm run build",
+      workingDirectory: ".",
+      workspaceDir,
+      env: { CONFIG_TOKEN: "real-token-from-the-test" },
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.logs).toContain("CONFIG_TOKEN=real-token-from-the-test");
+  }, 30_000);
+
   it("kills a hung build once the timeout elapses", async () => {
     const repoDir = await makeTmpDir();
     await prepareFixtureRepo(path.join(FIXTURES_ROOT, "sample-service"), repoDir);

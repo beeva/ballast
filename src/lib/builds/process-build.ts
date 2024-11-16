@@ -62,6 +62,7 @@ export async function processNextQueuedBuild(db: Db, workspaceRoot: string): Pro
     buildCommand: service.buildCommand,
     workingDirectory: service.workingDirectory,
     workspaceDir: path.join(workspaceRoot, build.id),
+    env: service.envVars,
   });
 
   await db

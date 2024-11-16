@@ -8,6 +8,7 @@ import { db } from "@/lib/db/client";
 import { builds, services } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/auth/current-admin";
 import { deployBuild } from "@/lib/deploys/deploy";
+import { parseEnvVarsText } from "@/lib/services/env-vars";
 
 const slugPattern = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
@@ -20,6 +21,7 @@ const createServiceSchema = z.object({
   buildCommand: z.string().min(1),
   startCommand: z.string().min(1),
   workingDirectory: z.string().min(1).default("."),
+  envVars: z.string().optional(),
   cpuRequestMilli: z.coerce.number().int().min(50).max(16000),
   memoryRequestMb: z.coerce.number().int().min(64).max(65536),
 });
@@ -36,8 +38,13 @@ export async function createService(_prevState: ActionState, formData: FormData)
     return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 
+  const parsedEnvVars = parseEnvVarsText(parsed.data.envVars ?? "");
+  if (!parsedEnvVars.ok) {
+    return { error: parsedEnvVars.error };
+  }
+
   try {
-    await db.insert(services).values(parsed.data);
+    await db.insert(services).values({ ...parsed.data, envVars: parsedEnvVars.vars });
   } catch (err) {
     if (err instanceof Error && err.message.includes("services_slug_unique")) {
       return { error: `A service with slug "${parsed.data.slug}" already exists.` };
@@ -70,9 +77,14 @@ export async function updateService(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 
+  const parsedEnvVars = parseEnvVarsText(parsed.data.envVars ?? "");
+  if (!parsedEnvVars.ok) {
+    return { error: parsedEnvVars.error };
+  }
+
   await db
     .update(services)
-    .set({ ...parsed.data, updatedAt: new Date() })
+    .set({ ...parsed.data, envVars: parsedEnvVars.vars, updatedAt: new Date() })
     .where(eq(services.id, serviceId));
 
   revalidatePath(`/admin/services/${serviceSlug}`);

@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import type { getServiceBySlug } from "@/lib/db/queries";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Input, Textarea } from "@/components/ui/input";
+import { formatEnvVarsText } from "@/lib/services/env-vars";
 import { updateService, type ActionState } from "../../actions";
 
 type Service = NonNullable<Awaited<ReturnType<typeof getServiceBySlug>>>;
@@ -47,6 +48,10 @@ export function EditServiceForm({ service }: { service: Service }) {
         <label className="flex flex-col gap-1 text-sm text-iron-300">
           Start command
           <Input name="startCommand" defaultValue={service.startCommand} required />
+        </label>
+        <label className="flex flex-col gap-1 text-sm text-iron-300">
+          Env vars <span className="text-iron-500">(optional, one KEY=VALUE per line)</span>
+          <Textarea name="envVars" defaultValue={formatEnvVarsText(service.envVars)} />
         </label>
         <div className="grid grid-cols-2 gap-3">
           <label className="flex flex-col gap-1 text-sm text-iron-300">
