@@ -82,6 +82,7 @@ that's still breaching doesn't open a second incident.
 | `npm run worker:watch`      | Keep polling for queued builds                                   |
 | `npm run alert-check`       | Evaluate all alert rules once and exit                           |
 | `npm run alert-check:watch` | Keep polling and evaluating alert rules                          |
+| `npm run prune-metrics`     | Delete metric points older than 30d (`--days=N`, `--dry-run`)    |
 
 ## Deploying
 
@@ -89,10 +90,12 @@ The database, worker, alert checker, and app are separate long-lived pieces:
 
 1. Provision Postgres and set `DATABASE_URL`, then run `npm run db:migrate` and
    `npm run db:seed` (or create an admin user directly).
-2. Set a real `SESSION_SECRET` and `BALLAST_WORKSPACE_DIR` (somewhere writable and with
-   enough disk for repo checkouts).
+2. Set a real `SESSION_SECRET`, `METRICS_INGEST_KEY`, and `BALLAST_WORKSPACE_DIR` (somewhere
+   writable and with enough disk for repo checkouts).
 3. Deploy the Next.js app anywhere that runs a Node server.
 4. Run `npm run worker:watch` as a long-lived background process (or on a schedule) - queued
    builds sit untouched until this runs.
 5. Run `npm run alert-check:watch` as a long-lived background process - alert rules are
    inert without it, no matter how many metrics come in through `/api/metrics`.
+6. Put `npm run prune-metrics` on a schedule (daily is plenty) - a metrics-ingestion
+   endpoint with no retention policy grows the `metrics` table forever.
