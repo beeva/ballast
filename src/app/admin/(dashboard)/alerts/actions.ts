@@ -7,6 +7,7 @@ import { db } from "@/lib/db/client";
 import { alertRules } from "@/lib/db/schema";
 import { isComparator } from "@/lib/alerts/threshold";
 import { requireAdmin } from "@/lib/auth/current-admin";
+import { recordAuditEvent } from "@/lib/audit/record";
 
 const createAlertRuleSchema = z.object({
   serviceId: z.string().uuid(),
@@ -28,20 +29,31 @@ export interface ActionState {
 }
 
 export async function createAlertRule(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const parsed = createAlertRuleSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 
-  await db.insert(alertRules).values({
-    serviceId: parsed.data.serviceId,
-    metricName: parsed.data.metricName,
-    comparator: parsed.data.comparator,
-    threshold: String(parsed.data.threshold),
-    windowMinutes: parsed.data.windowMinutes,
-    webhookUrl: parsed.data.webhookUrl,
+  const [created] = await db
+    .insert(alertRules)
+    .values({
+      serviceId: parsed.data.serviceId,
+      metricName: parsed.data.metricName,
+      comparator: parsed.data.comparator,
+      threshold: String(parsed.data.threshold),
+      windowMinutes: parsed.data.windowMinutes,
+      webhookUrl: parsed.data.webhookUrl,
+    })
+    .returning({ id: alertRules.id });
+
+  await recordAuditEvent(db, {
+    actorEmail: admin.email,
+    action: "alert_rule.created",
+    targetType: "alert_rule",
+    targetId: created?.id,
+    detail: parsed.data.metricName,
   });
 
   revalidatePath("/admin/alerts");
@@ -56,7 +68,19 @@ export async function createAlertRule(_prevState: ActionState, formData: FormDat
  * special case handled here.
  */
 export async function deleteAlertRule(ruleId: string): Promise<void> {
-  await requireAdmin();
-  await db.delete(alertRules).where(eq(alertRules.id, ruleId));
+  const admin = await requireAdmin();
+  const [deleted] = await db
+    .delete(alertRules)
+    .where(eq(alertRules.id, ruleId))
+    .returning({ metricName: alertRules.metricName });
+
+  await recordAuditEvent(db, {
+    actorEmail: admin.email,
+    action: "alert_rule.deleted",
+    targetType: "alert_rule",
+    targetId: ruleId,
+    detail: deleted?.metricName,
+  });
+
   revalidatePath("/admin/alerts");
 }

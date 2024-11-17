@@ -1,7 +1,7 @@
 import "server-only";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "./client";
-import { adminUsers, alertEvents, alertRules, builds, deploys, metrics, services } from "./schema";
+import { adminUsers, alertEvents, alertRules, auditLog, builds, deploys, metrics, services } from "./schema";
 import { estimateFleetMonthlyCost, estimateMonthlyCost } from "@/lib/cost/estimate";
 
 export async function getAdminByEmail(email: string) {
@@ -184,4 +184,8 @@ export async function listAlertRulesWithStatus() {
   const firingByRule = new Map(firingEvents.map((e) => [e.alertRuleId, e]));
 
   return rules.map((rule) => ({ ...rule, firingEvent: firingByRule.get(rule.id) ?? null }));
+}
+
+export async function getRecentAuditLog(limit = 100) {
+  return db.select().from(auditLog).orderBy(desc(auditLog.createdAt)).limit(limit);
 }

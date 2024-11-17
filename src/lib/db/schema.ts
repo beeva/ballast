@@ -168,3 +168,23 @@ export const alertEvents = pgTable(
     index("alert_events_alert_rule_id_idx").on(table.alertRuleId),
   ]
 );
+
+/**
+ * A record of admin mutations - who did what, to what, and when. targetId
+ * deliberately isn't a foreign key: the whole point of an audit trail is
+ * that "X deleted service Y" stays queryable after Y itself is gone, which
+ * a real FK (cascade or restrict) would either erase or block.
+ */
+export const auditLog = pgTable(
+  "audit_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    actorEmail: varchar("actor_email", { length: 320 }).notNull(),
+    action: varchar("action", { length: 60 }).notNull(), // e.g. "service.created", "build.triggered"
+    targetType: varchar("target_type", { length: 40 }).notNull(), // "service" | "build" | "deploy" | "alert_rule"
+    targetId: uuid("target_id"),
+    detail: text("detail"), // short human-readable summary, e.g. a service's name/slug at the time
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("audit_log_created_at_idx").on(table.createdAt)]
+);

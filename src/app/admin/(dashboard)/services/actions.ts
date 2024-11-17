@@ -9,6 +9,7 @@ import { builds, services } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/auth/current-admin";
 import { deployBuild } from "@/lib/deploys/deploy";
 import { parseEnvVarsText } from "@/lib/services/env-vars";
+import { recordAuditEvent } from "@/lib/audit/record";
 
 const slugPattern = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
@@ -31,7 +32,7 @@ export interface ActionState {
 }
 
 export async function createService(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const parsed = createServiceSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
@@ -43,14 +44,26 @@ export async function createService(_prevState: ActionState, formData: FormData)
     return { error: parsedEnvVars.error };
   }
 
+  let created: { id: string } | undefined;
   try {
-    await db.insert(services).values({ ...parsed.data, envVars: parsedEnvVars.vars });
+    [created] = await db
+      .insert(services)
+      .values({ ...parsed.data, envVars: parsedEnvVars.vars })
+      .returning({ id: services.id });
   } catch (err) {
     if (err instanceof Error && err.message.includes("services_slug_unique")) {
       return { error: `A service with slug "${parsed.data.slug}" already exists.` };
     }
     throw err;
   }
+
+  await recordAuditEvent(db, {
+    actorEmail: admin.email,
+    action: "service.created",
+    targetType: "service",
+    targetId: created?.id,
+    detail: parsed.data.slug,
+  });
 
   revalidatePath("/admin/services");
   return {};
@@ -70,7 +83,7 @@ export async function updateService(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const parsed = updateServiceSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
@@ -87,6 +100,14 @@ export async function updateService(
     .set({ ...parsed.data, envVars: parsedEnvVars.vars, updatedAt: new Date() })
     .where(eq(services.id, serviceId));
 
+  await recordAuditEvent(db, {
+    actorEmail: admin.email,
+    action: "service.updated",
+    targetType: "service",
+    targetId: serviceId,
+    detail: serviceSlug,
+  });
+
   revalidatePath(`/admin/services/${serviceSlug}`);
   return {};
 }
@@ -99,15 +120,32 @@ export async function updateService(
  * cascading delete, not left dangling.
  */
 export async function deleteService(serviceId: string): Promise<void> {
-  await requireAdmin();
-  await db.delete(services).where(eq(services.id, serviceId));
+  const admin = await requireAdmin();
+  const [deleted] = await db.delete(services).where(eq(services.id, serviceId)).returning({ slug: services.slug });
+
+  await recordAuditEvent(db, {
+    actorEmail: admin.email,
+    action: "service.deleted",
+    targetType: "service",
+    targetId: serviceId,
+    detail: deleted?.slug,
+  });
+
   revalidatePath("/admin/services");
   redirect("/admin/services");
 }
 
 export async function triggerBuild(serviceId: string): Promise<void> {
-  await requireAdmin();
-  await db.insert(builds).values({ serviceId, status: "queued" });
+  const admin = await requireAdmin();
+  const [build] = await db.insert(builds).values({ serviceId, status: "queued" }).returning({ id: builds.id });
+
+  await recordAuditEvent(db, {
+    actorEmail: admin.email,
+    action: "build.triggered",
+    targetType: "build",
+    targetId: build?.id,
+  });
+
   revalidatePath(`/admin/services`);
 }
 
@@ -121,11 +159,24 @@ export async function triggerBuild(serviceId: string): Promise<void> {
  * than corrupted into a false "cancelled" state.
  */
 export async function cancelQueuedBuild(buildId: string): Promise<void> {
-  await requireAdmin();
-  await db
+  const admin = await requireAdmin();
+  const [cancelled] = await db
     .update(builds)
     .set({ status: "failed", errorMessage: "cancelled before it started", finishedAt: new Date() })
-    .where(and(eq(builds.id, buildId), eq(builds.status, "queued")));
+    .where(and(eq(builds.id, buildId), eq(builds.status, "queued")))
+    .returning({ id: builds.id });
+
+  // Only log a real cancellation - if the WHERE guard matched nothing (the
+  // worker already claimed this build), nothing actually happened here.
+  if (cancelled) {
+    await recordAuditEvent(db, {
+      actorEmail: admin.email,
+      action: "build.cancelled",
+      targetType: "build",
+      targetId: buildId,
+    });
+  }
+
   revalidatePath("/admin/services");
 }
 
@@ -148,4 +199,12 @@ export async function deployBuildAction(serviceId: string, buildId: string): Pro
   });
   revalidatePath("/admin/services");
   if (!result.ok) throw new Error(result.error);
+
+  await recordAuditEvent(db, {
+    actorEmail: admin.email,
+    action: result.isRollback ? "deploy.rolled_back" : "deploy.created",
+    targetType: "deploy",
+    targetId: result.deployId,
+    detail: buildId,
+  });
 }
