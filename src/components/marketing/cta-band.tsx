@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { LinkButton } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 export function CTABand() {
@@ -15,14 +14,12 @@ export function CTABand() {
           build, a real deploy, never a placeholder.
         </p>
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Link href="/admin">
-            <Button size="lg">Open the dashboard</Button>
-          </Link>
-          <Link href="/docs">
-            <Button size="lg" variant="outline">
-              Read the docs
-            </Button>
-          </Link>
+          <LinkButton href="/admin" size="lg">
+            Open the dashboard
+          </LinkButton>
+          <LinkButton href="/docs" size="lg" variant="outline">
+            Read the docs
+          </LinkButton>
         </div>
       </div>
     </section>

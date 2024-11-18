@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { LinkButton } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 export function Hero() {
@@ -29,14 +28,12 @@ export function Hero() {
           className="mt-10 flex animate-fade-up flex-col items-center gap-3 sm:flex-row"
           style={{ animationDelay: "240ms" }}
         >
-          <Link href="/admin">
-            <Button size="lg">Open the dashboard</Button>
-          </Link>
-          <a href="#how-it-works">
-            <Button size="lg" variant="outline">
-              How it works
-            </Button>
-          </a>
+          <LinkButton href="/admin" size="lg">
+            Open the dashboard
+          </LinkButton>
+          <LinkButton href="#how-it-works" size="lg" variant="outline">
+            How it works
+          </LinkButton>
         </div>
       </div>
     </section>

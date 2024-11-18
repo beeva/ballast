@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { LinkButton } from "@/components/ui/button";
 
 const links = [
   { href: "#how-it-works", label: "How it works" },
@@ -27,7 +27,7 @@ export function Navbar() {
       <div className="container-page flex h-16 items-center justify-between">
         <Link href="/" className="flex items-center gap-2 font-display text-lg font-medium text-iron-50">
           <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-copper-500 text-iron-950">
-            <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4">
+            <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
               <path d="M8 7h8l-2 8h-4L8 7Z" fill="currentColor" />
               <path d="M6 17h12" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
             </svg>
@@ -51,9 +51,9 @@ export function Navbar() {
           <Link href="/admin/login" className="hidden text-sm text-iron-300 hover:text-iron-50 sm:block">
             Sign in
           </Link>
-          <Link href="/admin" className="hidden sm:inline-flex">
-            <Button size="sm">Open dashboard</Button>
-          </Link>
+          <LinkButton href="/admin" size="sm" className="hidden sm:inline-flex">
+            Open dashboard
+          </LinkButton>
           <button
             type="button"
             onClick={() => setMobileOpen((v) => !v)}
@@ -61,7 +61,7 @@ export function Navbar() {
             aria-expanded={mobileOpen}
             className="flex h-9 w-9 items-center justify-center rounded-lg text-iron-200 hover:bg-iron-800 md:hidden"
           >
-            <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
+            <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden="true">
               {mobileOpen ? (
                 <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth={2} strokeLinecap="round" />
               ) : (

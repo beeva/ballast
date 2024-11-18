@@ -64,7 +64,11 @@ export function EditServiceForm({ service }: { service: Service }) {
           </label>
         </div>
 
-        {state.error && <p className="text-sm text-red-400">{state.error}</p>}
+        {state.error && (
+          <p role="alert" className="text-sm text-red-400">
+            {state.error}
+          </p>
+        )}
 
         <Button type="submit" disabled={pending} className="mt-1">
           {pending ? "Saving..." : "Save changes"}

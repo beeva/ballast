@@ -51,7 +51,11 @@ export function NewAlertRuleForm({ services }: { services: Array<{ id: string; n
         <Input name="webhookUrl" type="url" placeholder="https://example.com/hooks/ballast" />
       </label>
 
-      {state.error && <p className="text-sm text-red-400">{state.error}</p>}
+      {state.error && (
+        <p role="alert" className="text-sm text-red-400">
+          {state.error}
+        </p>
+      )}
 
       <Button type="submit" className="mt-1" disabled={pending || services.length === 0}>
         {services.length === 0 ? "Create a service first" : pending ? "Adding..." : "Add rule"}

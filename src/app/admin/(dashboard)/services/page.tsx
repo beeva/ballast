@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { listServicesWithActiveDeploy } from "@/lib/db/queries";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, LinkButton } from "@/components/ui/button";
 import { triggerBuild } from "./actions";
 
 export default async function AdminServicesPage() {
@@ -14,9 +14,9 @@ export default async function AdminServicesPage() {
           <h1 className="font-display text-2xl text-iron-50">Services</h1>
           <p className="mt-1 text-sm text-iron-400">{serviceRows.length} declared.</p>
         </div>
-        <Link href="/admin/services/new">
-          <Button size="sm">New service</Button>
-        </Link>
+        <LinkButton href="/admin/services/new" size="sm">
+          New service
+        </LinkButton>
       </div>
 
       {serviceRows.length === 0 ? (
@@ -26,10 +26,12 @@ export default async function AdminServicesPage() {
           <table className="w-full text-left text-sm">
             <thead className="border-b border-iron-800 bg-iron-900/60 text-xs uppercase tracking-wide text-iron-400">
               <tr>
-                <th className="px-4 py-3 font-medium">Name</th>
-                <th className="px-4 py-3 font-medium">Live build</th>
-                <th className="px-4 py-3 font-medium">Est. monthly cost</th>
-                <th className="px-4 py-3 font-medium" />
+                <th scope="col" className="px-4 py-3 font-medium">Name</th>
+                <th scope="col" className="px-4 py-3 font-medium">Live build</th>
+                <th scope="col" className="px-4 py-3 font-medium">Est. monthly cost</th>
+                <th scope="col" className="px-4 py-3 font-medium">
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-iron-800">

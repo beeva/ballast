@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { LinkButton } from "@/components/ui/button";
 
 export default function NotFound() {
   return (
@@ -9,9 +8,9 @@ export default function NotFound() {
       <p className="max-w-sm text-iron-300">
         The page you&apos;re looking for doesn&apos;t exist, or never shipped.
       </p>
-      <Link href="/">
-        <Button variant="outline">Back home</Button>
-      </Link>
+      <LinkButton href="/" variant="outline">
+        Back home
+      </LinkButton>
     </main>
   );
 }

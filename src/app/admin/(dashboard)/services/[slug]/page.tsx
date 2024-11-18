@@ -89,7 +89,11 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-sm text-iron-100">{group.metricName}</span>
                   <span className="font-mono text-sm text-copper-400">{group.latestValue}</span>
-                  {group.trend && <span className="text-xs text-iron-500">{TREND_GLYPH[group.trend]}</span>}
+                  {group.trend && (
+                    <span className="text-xs text-iron-500" aria-label={`trending ${group.trend}`} title={`trending ${group.trend}`}>
+                      {TREND_GLYPH[group.trend]}
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-3 text-xs text-iron-500">
                   <span className="font-mono">{group.recentValues.slice(1).reverse().join(" · ") || "no prior points"}</span>

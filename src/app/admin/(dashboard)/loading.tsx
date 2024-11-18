@@ -1,6 +1,6 @@
 export default function AdminLoading() {
   return (
-    <div className="space-y-3">
+    <div role="status" aria-label="Loading" className="space-y-3">
       <div className="h-7 w-48 animate-pulse rounded-lg bg-iron-800" />
       <div className="h-4 w-72 animate-pulse rounded-lg bg-iron-800" />
       <div className="mt-6 space-y-2">

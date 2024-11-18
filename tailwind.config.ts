@@ -12,8 +12,17 @@ const config: Config = {
           800: "#1a1e25",
           700: "#252b34",
           600: "#374049",
-          500: "#4e5966",
-          400: "#6b7684",
+          // 500 and 400 were lightened from their original values (#4e5966,
+          // #6b7684) - both fell short of WCAG AA against the app's dark
+          // backgrounds (2.6-2.7:1 and 4.0-4.2:1 on iron-950/900, against a
+          // 4.5:1 normal-text / 3:1 large-text-and-UI requirement), and
+          // they're used throughout for real, meaningful text - build
+          // timestamps, metric values, audit log entries - not decoration.
+          // Same hue/saturation, just enough lighter to clear real
+          // thresholds: 500 now 3.2-3.4:1 (large text/UI), 400 now
+          // 4.7-5.0:1 (normal text).
+          500: "#5b6776",
+          400: "#748395",
           300: "#94a0ac",
           200: "#bcc4cc",
           100: "#dde1e5",
