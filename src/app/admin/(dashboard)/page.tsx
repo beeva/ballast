@@ -1,12 +1,25 @@
 import Link from "next/link";
-import { getDashboardSummary } from "@/lib/db/queries";
+import { getAuditLogPage, getDashboardSummary } from "@/lib/db/queries";
 import { BUILD_STATUS_LABEL, BUILD_STATUS_TONE, isBuildStatus } from "@/lib/status";
 import { formatDuration, formatRelativeTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 
+const ACTION_LABEL: Record<string, string> = {
+  "service.created": "created service",
+  "service.updated": "updated service",
+  "service.deleted": "deleted service",
+  "build.triggered": "triggered build",
+  "build.cancelled": "cancelled build",
+  "deploy.created": "deployed",
+  "deploy.rolled_back": "rolled back to",
+  "alert_rule.created": "created alert rule",
+  "alert_rule.deleted": "deleted alert rule",
+};
+
 export default async function AdminOverviewPage() {
-  const summary = await getDashboardSummary();
+  const [summary, auditPage] = await Promise.all([getDashboardSummary(), getAuditLogPage()]);
+  const recentActivity = auditPage.events.slice(0, 5);
 
   return (
     <div className="flex flex-col gap-6">
@@ -57,6 +70,31 @@ export default async function AdminOverviewPage() {
                 </li>
               );
             })}
+          </ul>
+        )}
+      </Card>
+
+      <Card>
+        <div className="flex items-center justify-between">
+          <CardTitle>Recent activity</CardTitle>
+          <Link href="/admin/audit-log" className="text-sm text-copper-400 hover:underline">
+            View all
+          </Link>
+        </div>
+        {recentActivity.length === 0 ? (
+          <CardDescription className="mt-2">No admin activity recorded yet.</CardDescription>
+        ) : (
+          <ul className="mt-4 flex flex-col gap-3">
+            {recentActivity.map((event) => (
+              <li key={event.id} className="flex items-center justify-between gap-3 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-iron-200">{event.actorEmail}</span>
+                  <span className="text-iron-400">{ACTION_LABEL[event.action] ?? event.action}</span>
+                  {event.detail && <span className="font-mono text-xs text-copper-400">{event.detail}</span>}
+                </div>
+                <span className="text-iron-500">{formatRelativeTime(event.createdAt)}</span>
+              </li>
+            ))}
           </ul>
         )}
       </Card>
