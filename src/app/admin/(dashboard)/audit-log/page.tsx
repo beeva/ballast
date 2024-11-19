@@ -1,6 +1,7 @@
-import { getRecentAuditLog } from "@/lib/db/queries";
+import { getAuditLogPage } from "@/lib/db/queries";
 import { formatRelativeTime, truncate } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
+import { LinkButton } from "@/components/ui/button";
 
 const ACTION_LABEL: Record<string, string> = {
   "service.created": "created service",
@@ -14,8 +15,20 @@ const ACTION_LABEL: Record<string, string> = {
   "alert_rule.deleted": "deleted alert rule",
 };
 
-export default async function AuditLogPage() {
-  const events = await getRecentAuditLog();
+export default async function AuditLogPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ before?: string }>;
+}) {
+  const { before } = await searchParams;
+  const beforeDate = before ? new Date(before) : undefined;
+  // An invalid/tampered ?before= falls back to the first page rather than
+  // passing an Invalid Date into the query - Postgres would reject it with
+  // a confusing error instead of just showing recent activity.
+  const { events, hasMore } = await getAuditLogPage(
+    beforeDate && !Number.isNaN(beforeDate.getTime()) ? beforeDate : undefined
+  );
+  const lastEvent = events[events.length - 1];
 
   return (
     <div className="flex flex-col gap-6">
@@ -29,7 +42,9 @@ export default async function AuditLogPage() {
 
       <Card>
         {events.length === 0 ? (
-          <p className="py-8 text-center text-sm text-iron-400">No admin activity recorded yet.</p>
+          <p className="py-8 text-center text-sm text-iron-400">
+            {before ? "No older activity." : "No admin activity recorded yet."}
+          </p>
         ) : (
           <ul className="flex flex-col gap-3">
             {events.map((event) => (
@@ -51,6 +66,16 @@ export default async function AuditLogPage() {
           </ul>
         )}
       </Card>
+
+      {hasMore && lastEvent && (
+        <LinkButton
+          href={`/admin/audit-log?before=${encodeURIComponent(lastEvent.createdAt.toISOString())}`}
+          variant="outline"
+          className="self-center"
+        >
+          Load older activity
+        </LinkButton>
+      )}
     </div>
   );
 }

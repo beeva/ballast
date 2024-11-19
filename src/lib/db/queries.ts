@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, lt, sql } from "drizzle-orm";
 import { db } from "./client";
 import { adminUsers, alertEvents, alertRules, auditLog, builds, deploys, metrics, services } from "./schema";
 import { estimateFleetMonthlyCost, estimateMonthlyCost } from "@/lib/cost/estimate";
@@ -186,6 +186,23 @@ export async function listAlertRulesWithStatus() {
   return rules.map((rule) => ({ ...rule, firingEvent: firingByRule.get(rule.id) ?? null }));
 }
 
-export async function getRecentAuditLog(limit = 100) {
-  return db.select().from(auditLog).orderBy(desc(auditLog.createdAt)).limit(limit);
+const AUDIT_LOG_PAGE_SIZE = 25;
+
+/**
+ * Cursor-paginated, not offset-paginated - an OFFSET N query re-scans and
+ * discards N rows every page, which gets real on a table that (by design)
+ * never stops growing. `before` is the createdAt of the last row on the
+ * previous page, so each query only ever looks at rows strictly older than
+ * what's already been shown.
+ */
+export async function getAuditLogPage(before?: Date) {
+  const rows = await db
+    .select()
+    .from(auditLog)
+    .where(before ? lt(auditLog.createdAt, before) : undefined)
+    .orderBy(desc(auditLog.createdAt))
+    .limit(AUDIT_LOG_PAGE_SIZE + 1);
+
+  const hasMore = rows.length > AUDIT_LOG_PAGE_SIZE;
+  return { events: rows.slice(0, AUDIT_LOG_PAGE_SIZE), hasMore };
 }
