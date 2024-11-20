@@ -47,6 +47,9 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
           <LinkButton href={`/admin/services/${service.slug}/edit`} variant="outline">
             Edit
           </LinkButton>
+          <LinkButton href={`/admin/services/new?from=${service.slug}`} variant="outline">
+            Duplicate
+          </LinkButton>
           <form action={triggerBuild.bind(null, service.id)}>
             <Button type="submit">Trigger build</Button>
           </form>
