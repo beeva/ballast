@@ -25,6 +25,10 @@ const OPERATIONS: Array<{ title: string; text: string }> = [
     title: "Alerting",
     text: "An alert rule averages a metric over its own window and compares it to a threshold. The alert checker (npm run alert-check:watch) opens or resolves an incident to match - a still-breaching rule doesn't open a second one. An optional webhook URL gets a real JSON POST (event, ruleId, serviceId, metricName, comparator, threshold, currentValue, occurredAt) on every fire and resolve.",
   },
+  {
+    title: "Env vars and duplicating a service",
+    text: "A service can declare KEY=VALUE env vars, passed straight into the real build subprocess's environment. Duplicate on a service's page prefills a new-service form from its current config - name and slug are left blank on purpose, since those are exactly what makes it a separate service.",
+  },
 ];
 
 const SNIPPET = `curl -X POST https://your-ballast-domain.example/api/metrics \\
@@ -66,6 +70,16 @@ export default function DocsPage() {
           <pre className="scrollbar-thin mt-4 max-w-2xl overflow-x-auto rounded-lg bg-iron-950 p-4 font-mono text-sm text-copper-400">
             {SNIPPET}
           </pre>
+        </div>
+
+        <div className="mt-10">
+          <h2 className="font-display text-xl text-iron-50">Health check</h2>
+          <p className="mt-2 max-w-2xl text-sm text-iron-300">
+            <code className="rounded bg-iron-800 px-1.5 py-0.5">GET /api/health</code> actually round-trips a
+            query to Postgres rather than returning a static 200 - point a load balancer or orchestrator&apos;s
+            liveness check at it and it&apos;ll correctly report unhealthy if the database is unreachable, not
+            just if the app process crashed.
+          </p>
         </div>
       </main>
       <Footer />

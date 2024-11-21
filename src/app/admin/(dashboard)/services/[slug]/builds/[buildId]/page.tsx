@@ -5,6 +5,7 @@ import { BUILD_STATUS_LABEL, BUILD_STATUS_TONE, isBuildStatus } from "@/lib/stat
 import { formatDate, formatDuration } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardTitle } from "@/components/ui/card";
+import { CopyLogsButton } from "./copy-logs-button";
 
 export default async function BuildDetailPage({
   params,
@@ -54,7 +55,10 @@ export default async function BuildDetailPage({
       )}
 
       <Card>
-        <CardTitle>Full log</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>Full log</CardTitle>
+          {build.logs && <CopyLogsButton logs={build.logs} />}
+        </div>
         <pre className="scrollbar-thin mt-4 max-h-[32rem] overflow-auto rounded-lg bg-iron-950 p-4 font-mono text-xs text-iron-200">
           {build.logs || "(no output captured)"}
         </pre>
