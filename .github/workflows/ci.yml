@@ -50,4 +50,7 @@ jobs:
       - name: Apply migrations against the CI database
         run: npm run db:migrate
 
+      - name: Smoke-test prune-metrics against the migrated CI database
+        run: npm run prune-metrics -- --dry-run
+
       - run: npm run build
