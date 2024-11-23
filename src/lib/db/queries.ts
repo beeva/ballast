@@ -195,6 +195,13 @@ const AUDIT_LOG_PAGE_SIZE = 25;
  * previous page, so each query only ever looks at rows strictly older than
  * what's already been shown.
  */
+/** Capped, not truly unbounded - a CSV export of a genuinely unbounded table isn't a real feature, it's a way to OOM the process. */
+const AUDIT_LOG_EXPORT_CAP = 10_000;
+
+export async function getAuditLogForExport() {
+  return db.select().from(auditLog).orderBy(desc(auditLog.createdAt)).limit(AUDIT_LOG_EXPORT_CAP);
+}
+
 export async function getAuditLogPage(before?: Date) {
   const rows = await db
     .select()

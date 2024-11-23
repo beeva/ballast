@@ -32,12 +32,17 @@ export default async function AuditLogPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="font-display text-2xl text-iron-50">Audit log</h1>
-        <p className="mt-1 text-sm text-iron-400">
-          Every admin mutation, most recent first. Entries survive deletion of whatever they
-          reference - a deleted service still shows up here as having been deleted.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-2xl text-iron-50">Audit log</h1>
+          <p className="mt-1 text-sm text-iron-400">
+            Every admin mutation, most recent first. Entries survive deletion of whatever they
+            reference - a deleted service still shows up here as having been deleted.
+          </p>
+        </div>
+        <LinkButton href="/admin/audit-log/export" variant="outline" size="sm">
+          Export CSV
+        </LinkButton>
       </div>
 
       <Card>
