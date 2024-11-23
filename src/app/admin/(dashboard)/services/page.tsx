@@ -1,26 +1,44 @@
 import Link from "next/link";
 import { listServicesWithActiveDeploy } from "@/lib/db/queries";
+import { filterServicesByQuery } from "@/lib/services/search";
 import { Badge } from "@/components/ui/badge";
 import { Button, LinkButton } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { triggerBuild } from "./actions";
 
-export default async function AdminServicesPage() {
-  const serviceRows = await listServicesWithActiveDeploy();
+export default async function AdminServicesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q = "" } = await searchParams;
+  const allServices = await listServicesWithActiveDeploy();
+  const serviceRows = filterServicesByQuery(allServices, q);
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl text-iron-50">Services</h1>
-          <p className="mt-1 text-sm text-iron-400">{serviceRows.length} declared.</p>
+          <p className="mt-1 text-sm text-iron-400">
+            {serviceRows.length} of {allServices.length} shown.
+          </p>
         </div>
         <LinkButton href="/admin/services/new" size="sm">
           New service
         </LinkButton>
       </div>
 
-      {serviceRows.length === 0 ? (
+      {allServices.length > 0 && (
+        <form className="max-w-sm">
+          <Input type="search" name="q" placeholder="Search by name or slug..." defaultValue={q} />
+        </form>
+      )}
+
+      {allServices.length === 0 ? (
         <p className="py-8 text-center text-sm text-iron-400">No services yet.</p>
+      ) : serviceRows.length === 0 ? (
+        <p className="py-8 text-center text-sm text-iron-400">No services match &quot;{q}&quot;.</p>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-iron-800">
           <table className="w-full text-left text-sm">
