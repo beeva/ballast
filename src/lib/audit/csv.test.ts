@@ -65,6 +65,41 @@ describe("auditLogToCsv", () => {
     expect(csv).toContain('"the ""prod"" service"');
   });
 
+  it.each(["=HYPERLINK(\"http://evil\",\"x\")", "+cmd|' /C calc'!A0", "-2+3", "@SUM(A1:A9)"])(
+    "neutralizes a formula-injection payload starting with %s",
+    (payload) => {
+      const csv = auditLogToCsv([
+        {
+          createdAt: new Date("2024-11-23T12:00:00.000Z"),
+          actorEmail: "admin@example.com",
+          action: "alert_rule.created",
+          targetType: "alert_rule",
+          targetId: null,
+          detail: payload,
+        },
+      ]);
+      const detailCell = csv.split("\r\n")[1]!.split(",").slice(5).join(",");
+      // A leading ' when opened in a spreadsheet forces text interpretation
+      // instead of formula evaluation - the payload's first real character
+      // must never be =, +, -, or @ once it lands in the cell.
+      expect(detailCell.replace(/^"|"$/g, "")).toMatch(/^'/);
+    }
+  );
+
+  it("does not alter a detail value that merely contains (not starts with) a formula-like character", () => {
+    const csv = auditLogToCsv([
+      {
+        createdAt: new Date("2024-11-23T12:00:00.000Z"),
+        actorEmail: "admin@example.com",
+        action: "service.updated",
+        targetType: "service",
+        targetId: "svc-1",
+        detail: "cost = $5/mo",
+      },
+    ]);
+    expect(csv).toContain("cost = $5/mo");
+  });
+
   it("quotes a field containing a newline", () => {
     const csv = auditLogToCsv([
       {

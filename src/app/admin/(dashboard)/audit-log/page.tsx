@@ -18,16 +18,19 @@ const ACTION_LABEL: Record<string, string> = {
 export default async function AuditLogPage({
   searchParams,
 }: {
-  searchParams: Promise<{ before?: string }>;
+  searchParams: Promise<{ before?: string; beforeId?: string }>;
 }) {
-  const { before } = await searchParams;
+  const { before, beforeId } = await searchParams;
   const beforeDate = before ? new Date(before) : undefined;
-  // An invalid/tampered ?before= falls back to the first page rather than
-  // passing an Invalid Date into the query - Postgres would reject it with
-  // a confusing error instead of just showing recent activity.
-  const { events, hasMore } = await getAuditLogPage(
-    beforeDate && !Number.isNaN(beforeDate.getTime()) ? beforeDate : undefined
-  );
+  // An invalid/tampered ?before= or a missing ?beforeId= falls back to the
+  // first page rather than passing a broken cursor into the query -
+  // Postgres would reject an Invalid Date with a confusing error instead of
+  // just showing recent activity.
+  const cursor =
+    beforeDate && !Number.isNaN(beforeDate.getTime()) && beforeId
+      ? { createdAt: beforeDate, id: beforeId }
+      : undefined;
+  const { events, hasMore } = await getAuditLogPage(cursor);
   const lastEvent = events[events.length - 1];
 
   return (
@@ -74,7 +77,7 @@ export default async function AuditLogPage({
 
       {hasMore && lastEvent && (
         <LinkButton
-          href={`/admin/audit-log?before=${encodeURIComponent(lastEvent.createdAt.toISOString())}`}
+          href={`/admin/audit-log?before=${encodeURIComponent(lastEvent.createdAt.toISOString())}&beforeId=${encodeURIComponent(lastEvent.id)}`}
           variant="outline"
           className="self-center"
         >

@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, lt, sql } from "drizzle-orm";
+import { and, desc, eq, lt, or, sql } from "drizzle-orm";
 import { db } from "./client";
 import { adminUsers, alertEvents, alertRules, auditLog, builds, deploys, metrics, services } from "./schema";
 import { estimateFleetMonthlyCost, estimateMonthlyCost } from "@/lib/cost/estimate";
@@ -188,13 +188,6 @@ export async function listAlertRulesWithStatus() {
 
 const AUDIT_LOG_PAGE_SIZE = 25;
 
-/**
- * Cursor-paginated, not offset-paginated - an OFFSET N query re-scans and
- * discards N rows every page, which gets real on a table that (by design)
- * never stops growing. `before` is the createdAt of the last row on the
- * previous page, so each query only ever looks at rows strictly older than
- * what's already been shown.
- */
 /** Capped, not truly unbounded - a CSV export of a genuinely unbounded table isn't a real feature, it's a way to OOM the process. */
 const AUDIT_LOG_EXPORT_CAP = 10_000;
 
@@ -202,12 +195,28 @@ export async function getAuditLogForExport() {
   return db.select().from(auditLog).orderBy(desc(auditLog.createdAt)).limit(AUDIT_LOG_EXPORT_CAP);
 }
 
-export async function getAuditLogPage(before?: Date) {
+/**
+ * Cursor-paginated, not offset-paginated - an OFFSET N query re-scans and
+ * discards N rows every page, which gets real on a table that (by design)
+ * never stops growing. The cursor is a compound (createdAt, id) key, not
+ * just createdAt - two audit rows can share the same millisecond-precision
+ * timestamp (concurrent admin actions, or a driver truncating Postgres's
+ * microsecond precision), and a createdAt-only cursor would silently drop
+ * whichever tied row sits on the page boundary instead of ever showing it.
+ */
+export async function getAuditLogPage(before?: { createdAt: Date; id: string }) {
   const rows = await db
     .select()
     .from(auditLog)
-    .where(before ? lt(auditLog.createdAt, before) : undefined)
-    .orderBy(desc(auditLog.createdAt))
+    .where(
+      before
+        ? or(
+            lt(auditLog.createdAt, before.createdAt),
+            and(eq(auditLog.createdAt, before.createdAt), lt(auditLog.id, before.id))
+          )
+        : undefined
+    )
+    .orderBy(desc(auditLog.createdAt), desc(auditLog.id))
     .limit(AUDIT_LOG_PAGE_SIZE + 1);
 
   const hasMore = rows.length > AUDIT_LOG_PAGE_SIZE;

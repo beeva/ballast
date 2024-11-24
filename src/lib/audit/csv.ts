@@ -7,12 +7,20 @@ export interface AuditCsvRow {
   detail: string | null;
 }
 
-/** RFC 4180 field escaping - quote and double-escape only when actually needed. */
+/**
+ * RFC 4180 field escaping plus CSV formula-injection prevention - a value
+ * starting with =, +, -, @, tab, or CR auto-executes as a formula when the
+ * file is opened in Excel/Sheets (a real vulnerability class distinct from
+ * comma/quote/newline escaping). detail comes from admin-entered fields
+ * like an alert rule's metricName, which has no character allowlist, so
+ * this isn't a hypothetical input.
+ */
 function csvField(value: string): string {
-  if (/[",\n]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
+  const safe = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+  if (/[",\n]/.test(safe)) {
+    return `"${safe.replace(/"/g, '""')}"`;
   }
-  return value;
+  return safe;
 }
 
 const HEADER = ["timestamp", "actor_email", "action", "target_type", "target_id", "detail"];
