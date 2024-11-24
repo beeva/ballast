@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.3.0
+
+Added a real database-backed `/api/health` endpoint, a `/admin/costs` breakdown of the
+fleet-wide estimate by service, search on the services list, and a CSV export of the audit
+log. `next.config.mjs` now produces a self-contained standalone server build and sends
+baseline security headers (no more `X-Powered-By`, plus `X-Content-Type-Options`,
+`X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`).
+
+A fourth independent review pass on that CSV export and the audit log's pagination found two
+real bugs before either shipped further: the export only did RFC 4180 delimiter escaping, not
+CSV formula-injection prevention (a `detail` value starting with `=`, `+`, `-`, or `@` - an
+alert rule's `metricName` has no character allowlist - would auto-execute as a formula when
+opened in Excel/Sheets); and pagination cursored on `createdAt` alone, so two audit rows
+sharing an exact timestamp could have one silently vanish forever at a page boundary. Both
+fixed and verified against real data pulled from the live database, not synthetic cases.
+
+146 unit tests total, up from 126 - env var/audit/CSV edge cases, rate limit window expiry,
+and services search all gained direct coverage. Every feature in this pass was verified live:
+a real Postgres down/up cycle for the health check, a hand-computed cost cross-check matching
+the rendered fleet total to the cent, and a live CSV download with a real comma-containing
+field confirmed correctly escaped.
+
 ## 1.2.0
 
 A third independent review pass found nothing left to fix - everything below is new
