@@ -6,6 +6,7 @@ import { z } from "zod";
 import { db } from "@/lib/db/client";
 import { alertRules } from "@/lib/db/schema";
 import { isComparator } from "@/lib/alerts/threshold";
+import { sendAlertWebhook } from "@/lib/alerts/webhook";
 import { requireAdmin } from "@/lib/auth/current-admin";
 import { recordAuditEvent } from "@/lib/audit/record";
 
@@ -83,4 +84,39 @@ export async function deleteAlertRule(ruleId: string): Promise<void> {
   });
 
   revalidatePath("/admin/alerts");
+}
+
+export interface TestWebhookState {
+  result?: "success" | "error";
+  message?: string;
+}
+
+/**
+ * Sends a real POST to the rule's configured webhookUrl with event: "test",
+ * so an admin can confirm a receiver is actually reachable before relying
+ * on it to fire during a real incident - not a dry-run, the same
+ * sendAlertWebhook the fire/resolve path uses, just with a result the
+ * caller can see instead of fire-and-forget.
+ */
+export async function testAlertWebhook(ruleId: string, _prevState: TestWebhookState): Promise<TestWebhookState> {
+  await requireAdmin();
+
+  const [rule] = await db.select().from(alertRules).where(eq(alertRules.id, ruleId));
+  if (!rule) return { result: "error", message: "Rule not found." };
+  if (!rule.webhookUrl) return { result: "error", message: "No webhook URL configured for this rule." };
+
+  const result = await sendAlertWebhook(rule.webhookUrl, {
+    event: "test",
+    ruleId: rule.id,
+    serviceId: rule.serviceId,
+    metricName: rule.metricName,
+    comparator: rule.comparator,
+    threshold: Number(rule.threshold),
+    currentValue: Number(rule.threshold),
+    occurredAt: new Date().toISOString(),
+  });
+
+  return result.ok
+    ? { result: "success", message: "Webhook responded successfully." }
+    : { result: "error", message: result.error };
 }

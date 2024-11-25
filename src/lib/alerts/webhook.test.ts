@@ -24,10 +24,11 @@ describe("sendAlertWebhook", () => {
     vi.unstubAllGlobals();
   });
 
-  it("POSTs the JSON payload to the given URL", async () => {
+  it("POSTs the JSON payload to the given URL and reports success", async () => {
     fetchMock.mockResolvedValue({ ok: true, status: 200 });
-    await sendAlertWebhook("https://example.com/hook", payload);
+    const result = await sendAlertWebhook("https://example.com/hook", payload);
 
+    expect(result).toEqual({ ok: true });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const call = fetchMock.mock.calls[0];
     if (!call) throw new Error("fetch was not called");
@@ -38,13 +39,15 @@ describe("sendAlertWebhook", () => {
     expect(JSON.parse(init.body)).toEqual(payload);
   });
 
-  it("does not throw when the receiver responds with a non-2xx status", async () => {
+  it("does not throw when the receiver responds with a non-2xx status, and reports the failure", async () => {
     fetchMock.mockResolvedValue({ ok: false, status: 500 });
-    await expect(sendAlertWebhook("https://example.com/hook", payload)).resolves.toBeUndefined();
+    const result = await sendAlertWebhook("https://example.com/hook", payload);
+    expect(result).toEqual({ ok: false, error: "Webhook responded with 500" });
   });
 
-  it("does not throw when the network request itself fails", async () => {
+  it("does not throw when the network request itself fails, and reports the failure", async () => {
     fetchMock.mockRejectedValue(new Error("ECONNREFUSED"));
-    await expect(sendAlertWebhook("https://example.com/hook", payload)).resolves.toBeUndefined();
+    const result = await sendAlertWebhook("https://example.com/hook", payload);
+    expect(result).toEqual({ ok: false, error: "ECONNREFUSED" });
   });
 });

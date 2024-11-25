@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { NewAlertRuleForm } from "./new-alert-rule-form";
+import { TestWebhookButton } from "./test-webhook-button";
 import { deleteAlertRule } from "./actions";
 
 const COMPARATOR_LABEL: Record<string, string> = {
@@ -81,6 +82,11 @@ export default async function AdminAlertsPage({
                     </form>
                   </div>
                 </div>
+                {rule.webhookUrl && (
+                  <div className="mt-3 border-t border-iron-800 pt-3">
+                    <TestWebhookButton ruleId={rule.id} />
+                  </div>
+                )}
               </Card>
             ))
           )}
