@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { listAlertRulesWithStatus, listServices } from "@/lib/db/queries";
+import { filterAlertRulesByQuery } from "@/lib/alerts/search";
 import { formatRelativeTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { NewAlertRuleForm } from "./new-alert-rule-form";
 import { deleteAlertRule } from "./actions";
 
@@ -14,23 +16,36 @@ const COMPARATOR_LABEL: Record<string, string> = {
   lte: "is at or below",
 };
 
-export default async function AdminAlertsPage() {
-  const [rules, allServices] = await Promise.all([listAlertRulesWithStatus(), listServices()]);
-  const firingCount = rules.filter((r) => r.firingEvent).length;
+export default async function AdminAlertsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q = "" } = await searchParams;
+  const [allRules, allServices] = await Promise.all([listAlertRulesWithStatus(), listServices()]);
+  const rules = filterAlertRulesByQuery(allRules, q);
+  const firingCount = allRules.filter((r) => r.firingEvent).length;
 
   return (
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="font-display text-2xl text-iron-50">Alerts</h1>
         <p className="mt-1 text-sm text-iron-400">
-          {rules.length} rule{rules.length === 1 ? "" : "s"}, {firingCount} currently firing.
+          {allRules.length} rule{allRules.length === 1 ? "" : "s"}, {firingCount} currently firing.
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
         <div className="flex flex-col gap-3">
-          {rules.length === 0 ? (
+          {allRules.length > 0 && (
+            <form className="max-w-sm">
+              <Input type="search" name="q" placeholder="Search by service or metric..." defaultValue={q} />
+            </form>
+          )}
+          {allRules.length === 0 ? (
             <p className="py-8 text-center text-sm text-iron-400">No alert rules yet.</p>
+          ) : rules.length === 0 ? (
+            <p className="py-8 text-center text-sm text-iron-400">No rules match &quot;{q}&quot;.</p>
           ) : (
             rules.map((rule) => (
               <Card key={rule.id} className={rule.firingEvent ? "border-l-4 border-l-red-500/60" : undefined}>
