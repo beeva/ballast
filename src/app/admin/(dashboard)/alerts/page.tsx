@@ -3,7 +3,7 @@ import { listAlertRulesWithStatus, listServices } from "@/lib/db/queries";
 import { filterAlertRulesByQuery } from "@/lib/alerts/search";
 import { formatRelativeTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, LinkButton } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { NewAlertRuleForm } from "./new-alert-rule-form";
@@ -75,6 +75,9 @@ export default async function AdminAlertsPage({
                     ) : (
                       <Badge tone="moss">healthy</Badge>
                     )}
+                    <LinkButton href={`/admin/alerts/${rule.id}/edit`} size="sm" variant="outline">
+                      Edit
+                    </LinkButton>
                     <form action={deleteAlertRule.bind(null, rule.id)}>
                       <Button size="sm" variant="outline" type="submit">
                         Delete

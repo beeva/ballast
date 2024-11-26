@@ -12,6 +12,7 @@ const ACTION_LABEL: Record<string, string> = {
   "deploy.created": "deployed",
   "deploy.rolled_back": "rolled back to",
   "alert_rule.created": "created alert rule",
+  "alert_rule.updated": "updated alert rule",
   "alert_rule.deleted": "deleted alert rule",
 };
 

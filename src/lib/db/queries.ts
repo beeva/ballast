@@ -155,6 +155,24 @@ export async function getServiceAlertRules(serviceId: string) {
   return db.select().from(alertRules).where(eq(alertRules.serviceId, serviceId));
 }
 
+export async function getAlertRuleById(id: string) {
+  const [row] = await db
+    .select({
+      id: alertRules.id,
+      serviceId: alertRules.serviceId,
+      serviceName: services.name,
+      metricName: alertRules.metricName,
+      comparator: alertRules.comparator,
+      threshold: alertRules.threshold,
+      windowMinutes: alertRules.windowMinutes,
+      webhookUrl: alertRules.webhookUrl,
+    })
+    .from(alertRules)
+    .innerJoin(services, eq(alertRules.serviceId, services.id))
+    .where(eq(alertRules.id, id));
+  return row ?? null;
+}
+
 export async function getFiringAlertForRule(alertRuleId: string) {
   const [event] = await db
     .select()

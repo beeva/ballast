@@ -61,6 +61,48 @@ export async function createAlertRule(_prevState: ActionState, formData: FormDat
   return {};
 }
 
+const updateAlertRuleSchema = createAlertRuleSchema.omit({ serviceId: true });
+
+/**
+ * serviceId isn't editable here - a rule for a different service is a
+ * different rule conceptually, mirroring why updateService doesn't let you
+ * change a service's slug either.
+ */
+export async function updateAlertRule(
+  ruleId: string,
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const admin = await requireAdmin();
+
+  const parsed = updateAlertRuleSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+  }
+
+  await db
+    .update(alertRules)
+    .set({
+      metricName: parsed.data.metricName,
+      comparator: parsed.data.comparator,
+      threshold: String(parsed.data.threshold),
+      windowMinutes: parsed.data.windowMinutes,
+      webhookUrl: parsed.data.webhookUrl,
+    })
+    .where(eq(alertRules.id, ruleId));
+
+  await recordAuditEvent(db, {
+    actorEmail: admin.email,
+    action: "alert_rule.updated",
+    targetType: "alert_rule",
+    targetId: ruleId,
+    detail: parsed.data.metricName,
+  });
+
+  revalidatePath("/admin/alerts");
+  return {};
+}
+
 /**
  * Bound to a plain `<form action={...}>` per rule row, so - like
  * deployBuildAction - it returns void and throws on failure rather than an
