@@ -6,14 +6,12 @@ import type { getAlertRuleById } from "@/lib/db/queries";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { updateAlertRule, type ActionState } from "../../actions";
 
 type Rule = NonNullable<Awaited<ReturnType<typeof getAlertRuleById>>>;
 
 const initialState: ActionState = {};
-
-const selectClasses =
-  "rounded-lg border border-iron-700 bg-iron-900 px-3 py-2 text-sm text-iron-100 outline-none focus:border-copper-500 focus:ring-1 focus:ring-copper-500";
 
 export function EditAlertRuleForm({ rule }: { rule: Rule }) {
   const boundUpdateAlertRule = updateAlertRule.bind(null, rule.id);
@@ -37,12 +35,12 @@ export function EditAlertRuleForm({ rule }: { rule: Rule }) {
         </label>
         <label className="flex flex-col gap-1 text-sm text-iron-300">
           Comparator
-          <select name="comparator" required className={selectClasses} defaultValue={rule.comparator}>
+          <Select name="comparator" required defaultValue={rule.comparator}>
             <option value="gt">Greater than</option>
             <option value="gte">Greater than or equal</option>
             <option value="lt">Less than</option>
             <option value="lte">Less than or equal</option>
-          </select>
+          </Select>
         </label>
         <label className="flex flex-col gap-1 text-sm text-iron-300">
           Threshold
