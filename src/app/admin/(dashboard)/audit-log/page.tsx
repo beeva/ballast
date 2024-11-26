@@ -1,20 +1,8 @@
 import { getAuditLogPage } from "@/lib/db/queries";
+import { AUDIT_ACTION_LABEL } from "@/lib/audit/labels";
 import { formatRelativeTime, truncate } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { LinkButton } from "@/components/ui/button";
-
-const ACTION_LABEL: Record<string, string> = {
-  "service.created": "created service",
-  "service.updated": "updated service",
-  "service.deleted": "deleted service",
-  "build.triggered": "triggered build",
-  "build.cancelled": "cancelled build",
-  "deploy.created": "deployed",
-  "deploy.rolled_back": "rolled back to",
-  "alert_rule.created": "created alert rule",
-  "alert_rule.updated": "updated alert rule",
-  "alert_rule.deleted": "deleted alert rule",
-};
 
 export default async function AuditLogPage({
   searchParams,
@@ -63,7 +51,7 @@ export default async function AuditLogPage({
               >
                 <div className="flex items-center gap-2">
                   <span className="text-iron-100">{event.actorEmail}</span>
-                  <span className="text-iron-400">{ACTION_LABEL[event.action] ?? event.action}</span>
+                  <span className="text-iron-400">{AUDIT_ACTION_LABEL[event.action] ?? event.action}</span>
                   {event.detail && <span className="font-mono text-xs text-copper-400">{event.detail}</span>}
                   {!event.detail && event.targetId && (
                     <span className="font-mono text-xs text-iron-500">{truncate(event.targetId, 8)}</span>

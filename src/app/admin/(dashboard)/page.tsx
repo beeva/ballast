@@ -1,22 +1,10 @@
 import Link from "next/link";
 import { getAuditLogPage, getDashboardSummary } from "@/lib/db/queries";
+import { AUDIT_ACTION_LABEL } from "@/lib/audit/labels";
 import { BUILD_STATUS_LABEL, BUILD_STATUS_TONE, isBuildStatus } from "@/lib/status";
 import { formatDuration, formatRelativeTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
-
-const ACTION_LABEL: Record<string, string> = {
-  "service.created": "created service",
-  "service.updated": "updated service",
-  "service.deleted": "deleted service",
-  "build.triggered": "triggered build",
-  "build.cancelled": "cancelled build",
-  "deploy.created": "deployed",
-  "deploy.rolled_back": "rolled back to",
-  "alert_rule.created": "created alert rule",
-  "alert_rule.updated": "updated alert rule",
-  "alert_rule.deleted": "deleted alert rule",
-};
 
 export default async function AdminOverviewPage() {
   const [summary, auditPage] = await Promise.all([getDashboardSummary(), getAuditLogPage()]);
@@ -90,7 +78,7 @@ export default async function AdminOverviewPage() {
               <li key={event.id} className="flex items-center justify-between gap-3 text-sm">
                 <div className="flex items-center gap-2">
                   <span className="text-iron-200">{event.actorEmail}</span>
-                  <span className="text-iron-400">{ACTION_LABEL[event.action] ?? event.action}</span>
+                  <span className="text-iron-400">{AUDIT_ACTION_LABEL[event.action] ?? event.action}</span>
                   {event.detail && <span className="font-mono text-xs text-copper-400">{event.detail}</span>}
                 </div>
                 <span className="text-iron-500">{formatRelativeTime(event.createdAt)}</span>
