@@ -4,6 +4,7 @@ import {
   getServiceBySlug,
   getServiceBuildHistory,
   getServiceDeployHistory,
+  getServiceAlertRulesWithStatus,
   getRecentMetrics,
 } from "@/lib/db/queries";
 import { estimateMonthlyCost } from "@/lib/cost/estimate";
@@ -26,12 +27,14 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
   const service = await getServiceBySlug(slug);
   if (!service) notFound();
 
-  const [buildHistory, deployHistory, recentMetricRows] = await Promise.all([
+  const [buildHistory, deployHistory, recentMetricRows, alertRules] = await Promise.all([
     getServiceBuildHistory(service.id),
     getServiceDeployHistory(service.id),
     getRecentMetrics(service.id),
+    getServiceAlertRulesWithStatus(service.id),
   ]);
   const metricGroups = groupMetricsByName(recentMetricRows);
+  const firingAlertCount = alertRules.filter((r) => r.firingEvent).length;
 
   const activeDeploy = deployHistory.find((d) => d.status === "active");
   const cost = estimateMonthlyCost(service.cpuRequestMilli, service.memoryRequestMb);
@@ -40,7 +43,17 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-2xl text-iron-50">{service.name}</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="font-display text-2xl text-iron-50">{service.name}</h1>
+            {alertRules.length > 0 &&
+              (firingAlertCount > 0 ? (
+                <Badge tone="danger">
+                  {firingAlertCount} alert{firingAlertCount === 1 ? "" : "s"} firing
+                </Badge>
+              ) : (
+                <Badge tone="moss">operational</Badge>
+              ))}
+          </div>
           <p className="mt-1 font-mono text-sm text-iron-400">{service.slug}</p>
         </div>
         <div className="flex items-center gap-2">
@@ -102,6 +115,29 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
                   <span className="font-mono">{group.recentValues.slice(1).reverse().join(" · ") || "no prior points"}</span>
                   <span>{formatRelativeTime(group.latestRecordedAt)}</span>
                 </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
+      <Card>
+        <div className="flex items-center justify-between">
+          <CardTitle>Alert rules</CardTitle>
+          <Link href="/admin/alerts" className="text-sm text-copper-400 hover:underline">
+            Manage
+          </Link>
+        </div>
+        {alertRules.length === 0 ? (
+          <p className="mt-3 text-sm text-iron-400">No alert rules for this service yet.</p>
+        ) : (
+          <ul className="mt-4 flex flex-col gap-2">
+            {alertRules.map((rule) => (
+              <li key={rule.id} className="flex items-center justify-between gap-3 text-sm">
+                <span className="font-mono text-xs text-iron-300">
+                  {rule.metricName} {rule.comparator} {Number(rule.threshold)}
+                </span>
+                {rule.firingEvent ? <Badge tone="danger">firing</Badge> : <Badge tone="moss">healthy</Badge>}
               </li>
             ))}
           </ul>

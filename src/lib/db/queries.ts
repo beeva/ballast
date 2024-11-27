@@ -173,6 +173,20 @@ export async function getAlertRuleById(id: string) {
   return row ?? null;
 }
 
+/** Like listAlertRulesWithStatus, scoped to one service - for the service detail page. */
+export async function getServiceAlertRulesWithStatus(serviceId: string) {
+  const rules = await db.select().from(alertRules).where(eq(alertRules.serviceId, serviceId));
+  if (rules.length === 0) return [];
+
+  const firingEvents = await db
+    .select()
+    .from(alertEvents)
+    .where(and(eq(alertEvents.serviceId, serviceId), eq(alertEvents.status, "firing")));
+  const firingByRule = new Map(firingEvents.map((e) => [e.alertRuleId, e]));
+
+  return rules.map((rule) => ({ ...rule, firingEvent: firingByRule.get(rule.id) ?? null }));
+}
+
 export async function getFiringAlertForRule(alertRuleId: string) {
   const [event] = await db
     .select()
