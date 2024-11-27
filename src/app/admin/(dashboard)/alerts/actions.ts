@@ -80,7 +80,7 @@ export async function updateAlertRule(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 
-  await db
+  const [updated] = await db
     .update(alertRules)
     .set({
       metricName: parsed.data.metricName,
@@ -89,7 +89,16 @@ export async function updateAlertRule(
       windowMinutes: parsed.data.windowMinutes,
       webhookUrl: parsed.data.webhookUrl,
     })
-    .where(eq(alertRules.id, ruleId));
+    .where(eq(alertRules.id, ruleId))
+    .returning({ id: alertRules.id });
+
+  // Guards against a TOCTOU gap: the rule could have been deleted in the
+  // moment between the edit page loading and this submit. Without this
+  // check the UPDATE would silently affect zero rows while still logging
+  // "alert_rule.updated" and redirecting as if it succeeded.
+  if (!updated) {
+    return { error: "This rule no longer exists - it may have been deleted." };
+  }
 
   await recordAuditEvent(db, {
     actorEmail: admin.email,

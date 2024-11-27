@@ -95,10 +95,19 @@ export async function updateService(
     return { error: parsedEnvVars.error };
   }
 
-  await db
+  const [updated] = await db
     .update(services)
     .set({ ...parsed.data, envVars: parsedEnvVars.vars, updatedAt: new Date() })
-    .where(eq(services.id, serviceId));
+    .where(eq(services.id, serviceId))
+    .returning({ id: services.id });
+
+  // Guards against a TOCTOU gap: the service could have been deleted in the
+  // moment between the edit page loading and this submit. Without this
+  // check the UPDATE would silently affect zero rows while still logging
+  // "service.updated" and redirecting as if it succeeded.
+  if (!updated) {
+    return { error: "This service no longer exists - it may have been deleted." };
+  }
 
   await recordAuditEvent(db, {
     actorEmail: admin.email,
