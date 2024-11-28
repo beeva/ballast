@@ -151,6 +151,27 @@ export async function getServiceHealthSummary() {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
+/** Deploy history across every service, not just one - "what changed and when" fleet-wide. */
+export async function getRecentDeploys(limit = 50) {
+  return db
+    .select({
+      id: deploys.id,
+      status: deploys.status,
+      isRollback: deploys.isRollback,
+      deployedBy: deploys.deployedBy,
+      deployedAt: deploys.deployedAt,
+      buildId: builds.id,
+      commitRef: builds.commitRef,
+      serviceName: services.name,
+      serviceSlug: services.slug,
+    })
+    .from(deploys)
+    .innerJoin(builds, eq(deploys.buildId, builds.id))
+    .innerJoin(services, eq(deploys.serviceId, services.id))
+    .orderBy(desc(deploys.deployedAt))
+    .limit(limit);
+}
+
 export async function getServiceAlertRules(serviceId: string) {
   return db.select().from(alertRules).where(eq(alertRules.serviceId, serviceId));
 }
