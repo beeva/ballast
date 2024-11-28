@@ -61,10 +61,18 @@ export async function listServicesWithActiveDeploy() {
     .where(eq(deploys.status, "active"));
   const activeByService = new Map(activeDeploys.map((d) => [d.serviceId, d]));
 
+  const firingByService = await db
+    .select({ serviceId: alertEvents.serviceId, count: sql<number>`count(*)::int` })
+    .from(alertEvents)
+    .where(eq(alertEvents.status, "firing"))
+    .groupBy(alertEvents.serviceId);
+  const firingCountByService = new Map(firingByService.map((row) => [row.serviceId, row.count]));
+
   return allServices.map((service) => ({
     ...service,
     activeDeploy: activeByService.get(service.id) ?? null,
     monthlyCost: estimateMonthlyCost(service.cpuRequestMilli, service.memoryRequestMb),
+    firingAlertCount: firingCountByService.get(service.id) ?? 0,
   }));
 }
 

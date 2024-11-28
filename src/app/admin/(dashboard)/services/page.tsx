@@ -46,6 +46,7 @@ export default async function AdminServicesPage({
               <tr>
                 <th scope="col" className="px-4 py-3 font-medium">Name</th>
                 <th scope="col" className="px-4 py-3 font-medium">Live build</th>
+                <th scope="col" className="px-4 py-3 font-medium">Alerts</th>
                 <th scope="col" className="px-4 py-3 font-medium">Est. monthly cost</th>
                 <th scope="col" className="px-4 py-3 font-medium">
                   <span className="sr-only">Actions</span>
@@ -66,6 +67,13 @@ export default async function AdminServicesPage({
                       <Badge tone="moss">deployed</Badge>
                     ) : (
                       <Badge tone="neutral">no active deploy</Badge>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {service.firingAlertCount > 0 ? (
+                      <Badge tone="danger">{service.firingAlertCount} firing</Badge>
+                    ) : (
+                      <span className="text-xs text-iron-500">&mdash;</span>
                     )}
                   </td>
                   <td className="px-4 py-3 font-mono text-iron-100">${service.monthlyCost.totalUsd.toFixed(2)}</td>
