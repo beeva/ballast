@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.4.0
+
+Alert rules gained the rest of their lifecycle: an edit page (metric/comparator/threshold/
+window/webhook, serviceId left immutable same as a service's slug), and a "Test webhook"
+button that sends a real `event: "test"` POST through the same `sendAlertWebhook` a live fire
+uses, so a broken receiver is caught before it matters instead of during a real incident.
+Added a service-scoped alert rules card (with a firing-count badge in the header) to the
+service detail page - a service's own page said nothing about its alert status before this.
+Added a fleet-wide `/admin/deploys` page - deploy history only existed scoped to one service
+before.
+
+Two small real bugs fixed: `Select` (extracted this round from two duplicated inline
+`<select>` styles) was missing the `w-full` every other form field has, invisible today only
+because both call sites happen to sit in a flex-col label; and `updateService`/
+`updateAlertRule` didn't check whether their UPDATE actually matched a row before logging an
+audit event and redirecting as success, a narrow TOCTOU gap now guarded with `.returning()`
+the same way `cancelQueuedBuild` already was.
+
+152 unit tests total, up from 146. Every feature verified live: a real deploy pushed through
+the actual build-and-deploy pipeline and confirmed rendering on the new fleet page, a real
+alert fired and confirmed flipping the service page's badge, and the TOCTOU guard proven
+against an actually-deleted-mid-flight row, not a hypothetical.
+
 ## 1.3.0
 
 Added a real database-backed `/api/health` endpoint, a `/admin/costs` breakdown of the
