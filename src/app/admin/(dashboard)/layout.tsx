@@ -25,7 +25,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <div className="flex-1">
         <header className="flex h-14 items-center justify-between border-b border-iron-800 px-4 sm:px-6">
           <AdminMobileNav />
-          <p className="text-sm text-iron-400">{session?.email}</p>
+          <Link href="/admin/account" className="text-sm text-iron-400 hover:text-iron-100">
+            {session?.email}
+          </Link>
           <form action={logout}>
             <button type="submit" className="text-sm text-iron-300 hover:text-iron-50">
               Sign out

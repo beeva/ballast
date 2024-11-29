@@ -31,7 +31,8 @@ Most of the pain in running software isn't the code, it's everything around it: 
 - [x] Build runner (real command execution, isolated workspace, captured logs)
 - [x] Service manifests + deploy/rollback on build history, with build cancel/retry
 - [x] Per-service declared env vars, passed to the real build subprocess
-- [x] Metrics ingestion (API-key gated) + alert rule evaluation, with optional webhooks
+- [x] Metrics ingestion (API-key gated) + alert rule evaluation, editable rules with a
+      test-webhook button, and fleet-wide deploy/alert visibility
 - [x] Cost estimator
 - [x] Admin dashboard (service create/edit/duplicate/delete/search, build log viewer, a
       per-service cost breakdown, an audit log with CSV export)

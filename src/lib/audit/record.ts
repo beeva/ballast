@@ -3,7 +3,7 @@ import { auditLog } from "@/lib/db/schema";
 
 export type Db = typeof DbClient;
 
-export type AuditTargetType = "service" | "build" | "deploy" | "alert_rule";
+export type AuditTargetType = "service" | "build" | "deploy" | "alert_rule" | "admin";
 
 export interface AuditEventInput {
   actorEmail: string;

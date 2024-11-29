@@ -10,4 +10,5 @@ export const AUDIT_ACTION_LABEL: Record<string, string> = {
   "alert_rule.created": "created alert rule",
   "alert_rule.updated": "updated alert rule",
   "alert_rule.deleted": "deleted alert rule",
+  "admin.password_changed": "changed password",
 };
