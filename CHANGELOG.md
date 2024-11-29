@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.5.0
+
+Added a fleet-wide `/admin/deploys` page (deploy history only ever existed scoped to one
+service before) and a firing-alert count column on the services list, matching the badge
+already on each service's own detail page - both close the same gap: nothing showed "what's
+happening across the whole fleet" without opening every service individually. Added
+self-service admin password change (`/admin/account`, linked from the email in the header) -
+requires and verifies the real current password first, so a stolen session alone can't lock
+the real admin out, and rate-limited the same way login is (5 attempts / 5 minutes) after
+initially shipping it without that.
+
+A sixth independent review pass, focused entirely on the password-change feature, found no
+real bugs - confirmed `requireAdmin()` runs before any rate-limit or database work, confirmed
+a changed password intentionally doesn't invalidate already-issued session JWTs (they carry no
+password-derived value to check against, a deliberate stateless-session trade-off, not an
+oversight), and confirmed the new `"admin"` audit target type doesn't break either place that
+renders audit entries. Fixed one stale inline comment it caught along the way.
+
+Every feature in this pass was verified against the real database: a real deploy pushed
+through the actual build-and-deploy pipeline and confirmed on the new fleet page, a real
+firing alert confirmed changing the services list table, and a real password change (wrong-
+password rejection, then the actual hash update) run against a throwaway admin row - old
+password stops verifying, new one works.
+
 ## 1.4.0
 
 Alert rules gained the rest of their lifecycle: an edit page (metric/comparator/threshold/
