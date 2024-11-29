@@ -8,6 +8,7 @@ import { adminUsers } from "@/lib/db/schema";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { requireAdmin } from "@/lib/auth/current-admin";
 import { recordAuditEvent } from "@/lib/audit/record";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const changePasswordSchema = z
   .object({
@@ -30,6 +31,14 @@ export async function changePassword(
   formData: FormData
 ): Promise<ChangePasswordState> {
   const admin = await requireAdmin();
+
+  // A valid session proves who you are, not that you still know the
+  // current password - without this, a stolen/left-open session becomes
+  // an unlimited-attempts oracle for guessing it. Same limit as login.
+  const rateLimit = checkRateLimit(`change-password:${admin.adminId}`, { limit: 5, windowMs: 5 * 60_000 });
+  if (!rateLimit.allowed) {
+    return { error: "Too many attempts. Wait a few minutes and try again." };
+  }
 
   const parsed = changePasswordSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
