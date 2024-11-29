@@ -181,7 +181,7 @@ export const auditLog = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     actorEmail: varchar("actor_email", { length: 320 }).notNull(),
     action: varchar("action", { length: 60 }).notNull(), // e.g. "service.created", "build.triggered"
-    targetType: varchar("target_type", { length: 40 }).notNull(), // "service" | "build" | "deploy" | "alert_rule"
+    targetType: varchar("target_type", { length: 40 }).notNull(), // "service" | "build" | "deploy" | "alert_rule" | "admin"
     targetId: uuid("target_id"),
     detail: text("detail"), // short human-readable summary, e.g. a service's name/slug at the time
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
