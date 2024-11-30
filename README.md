@@ -35,7 +35,7 @@ Most of the pain in running software isn't the code, it's everything around it: 
       test-webhook button, and fleet-wide deploy/alert visibility
 - [x] Cost estimator
 - [x] Admin dashboard (service create/edit/duplicate/delete/search, build log viewer, a
-      per-service cost breakdown, an audit log with CSV export)
+      per-service cost breakdown, an audit log with CSV export, self-service password change)
 - [x] Metrics retention script + database-backed health check
 - [x] Public status page
 - [x] Marketing site + docs
