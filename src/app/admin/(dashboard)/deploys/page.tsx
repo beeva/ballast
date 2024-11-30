@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getRecentDeploys } from "@/lib/db/queries";
 import { formatRelativeTime, truncate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+
+export const metadata: Metadata = { title: "Deploys" };
 
 export default async function DeploysPage() {
   const deploys = await getRecentDeploys();

@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import { getServiceBySlug } from "@/lib/db/queries";
 import { formatEnvVarsText } from "@/lib/services/env-vars";
 import { NewServiceForm, type NewServiceInitialValues } from "./new-service-form";
+
+export const metadata: Metadata = { title: "New service" };
 
 export default async function NewServicePage({
   searchParams,

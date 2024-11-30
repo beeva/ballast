@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { listServices } from "@/lib/db/queries";
 import { estimateFleetMonthlyCost, estimateMonthlyCost } from "@/lib/cost/estimate";
 import { Card, CardTitle } from "@/components/ui/card";
+
+export const metadata: Metadata = { title: "Costs" };
 
 export default async function CostsPage() {
   const services = await listServices();

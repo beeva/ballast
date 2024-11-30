@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { listAlertRulesWithStatus, listServices } from "@/lib/db/queries";
 import { filterAlertRulesByQuery } from "@/lib/alerts/search";
@@ -9,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { NewAlertRuleForm } from "./new-alert-rule-form";
 import { TestWebhookButton } from "./test-webhook-button";
 import { deleteAlertRule } from "./actions";
+
+export const metadata: Metadata = { title: "Alerts" };
 
 const COMPARATOR_LABEL: Record<string, string> = {
   gt: "is above",

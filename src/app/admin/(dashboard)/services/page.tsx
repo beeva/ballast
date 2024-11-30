@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { listServicesWithActiveDeploy } from "@/lib/db/queries";
 import { filterServicesByQuery } from "@/lib/services/search";
@@ -5,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button, LinkButton } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { triggerBuild } from "./actions";
+
+export const metadata: Metadata = { title: "Services" };
 
 export default async function AdminServicesPage({
   searchParams,

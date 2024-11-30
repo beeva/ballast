@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getAuditLogPage, getDashboardSummary } from "@/lib/db/queries";
 import { AUDIT_ACTION_LABEL } from "@/lib/audit/labels";
@@ -5,6 +6,8 @@ import { BUILD_STATUS_LABEL, BUILD_STATUS_TONE, isBuildStatus } from "@/lib/stat
 import { formatDuration, formatRelativeTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+
+export const metadata: Metadata = { title: "Overview" };
 
 export default async function AdminOverviewPage() {
   const [summary, auditPage] = await Promise.all([getDashboardSummary(), getAuditLogPage()]);

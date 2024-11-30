@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import { getCurrentAdmin } from "@/lib/auth/current-admin";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { ChangePasswordForm } from "./change-password-form";
+
+export const metadata: Metadata = { title: "Account" };
 
 export default async function AccountPage() {
   const admin = await getCurrentAdmin();

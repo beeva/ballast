@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { getAuditLogPage } from "@/lib/db/queries";
 import { AUDIT_ACTION_LABEL } from "@/lib/audit/labels";
 import { formatRelativeTime, truncate } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { LinkButton } from "@/components/ui/button";
+
+export const metadata: Metadata = { title: "Audit log" };
 
 export default async function AuditLogPage({
   searchParams,
