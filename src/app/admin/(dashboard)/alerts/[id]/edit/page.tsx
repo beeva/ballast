@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getAlertRuleById } from "@/lib/db/queries";
 import { EditAlertRuleForm } from "./edit-alert-rule-form";
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const rule = await getAlertRuleById(id);
+  return { title: rule ? `Edit alert: ${rule.metricName}` : "Edit alert rule" };
+}
 
 export default async function EditAlertRulePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

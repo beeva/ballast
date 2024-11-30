@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getBuildById } from "@/lib/db/queries";
@@ -6,6 +7,17 @@ import { formatDate, formatDuration } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardTitle } from "@/components/ui/card";
 import { CopyLogsButton } from "./copy-logs-button";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string; buildId: string }>;
+}): Promise<Metadata> {
+  const { slug, buildId } = await params;
+  const build = await getBuildById(buildId);
+  if (!build || build.serviceSlug !== slug) return { title: "Build" };
+  return { title: `Build ${build.id.slice(0, 8)} (${build.serviceName})` };
+}
 
 export default async function BuildDetailPage({
   params,

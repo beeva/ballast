@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -21,6 +22,12 @@ import { DeleteServiceButton } from "./delete-service-button";
 // one to see rising (throughput vs. error rate) - so this is a neutral
 // glyph, not a red/green good/bad judgment.
 const TREND_GLYPH: Record<"up" | "down" | "flat", string> = { up: "▲", down: "▼", flat: "▬" };
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const service = await getServiceBySlug(slug);
+  return { title: service?.name ?? "Service" };
+}
 
 export default async function ServiceDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

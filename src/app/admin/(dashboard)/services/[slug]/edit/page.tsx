@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getServiceBySlug } from "@/lib/db/queries";
 import { EditServiceForm } from "./edit-service-form";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const service = await getServiceBySlug(slug);
+  return { title: service ? `Edit ${service.name}` : "Edit service" };
+}
 
 export default async function EditServicePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
