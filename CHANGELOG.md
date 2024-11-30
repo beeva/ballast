@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.6.0
+
+Every admin page now has its own real browser tab title instead of the same generic site
+title everywhere - the 8 top-level pages (Overview, Services, Deploys, Alerts, Costs, Audit
+log, Account, New service) via a plain `metadata` export, and the 4 per-record pages (a
+service's detail/edit pages, a build's detail page, an alert rule's edit page) via
+`generateMetadata` fetching the real record - "Sample Service", "Edit alert: latency_ms", and
+so on. The build detail page's title generation reuses the same ownership check
+(`build.serviceSlug !== slug`) the page body already enforces, so a mismatched service/build
+pair in the URL can't leak the real service name into the tab title either.
+
+Verified against a running server with real seeded records for all 12 pages - including the
+one deliberately-wrong-slug case, which correctly falls back to a generic title instead of
+erroring or leaking data.
+
 ## 1.5.0
 
 Added a fleet-wide `/admin/deploys` page (deploy history only ever existed scoped to one
