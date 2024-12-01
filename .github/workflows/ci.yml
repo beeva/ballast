@@ -53,4 +53,7 @@ jobs:
       - name: Smoke-test prune-metrics against the migrated CI database
         run: npm run prune-metrics -- --dry-run
 
+      - name: Run the real end-to-end pipeline smoke test
+        run: npm run smoke-test
+
       - run: npm run build

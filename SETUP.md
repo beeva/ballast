@@ -83,6 +83,7 @@ that's still breaching doesn't open a second incident.
 | `npm run alert-check`       | Evaluate all alert rules once and exit                           |
 | `npm run alert-check:watch` | Keep polling and evaluating alert rules                          |
 | `npm run prune-metrics`     | Delete metric points older than 30d (`--days=N`, `--dry-run`)    |
+| `npm run smoke-test`        | Real end-to-end run: clone→build→deploy→ingest→alert→webhook     |
 
 ## Deploying
 

@@ -21,7 +21,8 @@
     "worker:watch": "tsx scripts/run-worker.ts --watch",
     "alert-check": "tsx scripts/run-alert-check.ts",
     "alert-check:watch": "tsx scripts/run-alert-check.ts --watch",
-    "prune-metrics": "tsx scripts/prune-metrics.ts"
+    "prune-metrics": "tsx scripts/prune-metrics.ts",
+    "smoke-test": "tsx scripts/smoke-test.ts"
   },
   "dependencies": {
     "next": "^15.1.0",
