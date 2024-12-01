@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.7.0
+
+Added `npm run smoke-test`, a real end-to-end pipeline script (clone → build → deploy →
+ingest → alert → webhook, against whatever database it's pointed at, no mocks) now run as its
+own CI step after migrations - every prior verification in this project's history was done by
+hand-writing a throwaway script and deleting it after; this is the first one that's permanent
+and repeatable. `package.json`'s version now matches `CHANGELOG.md` (was still `0.1.0`).
+
+Its first real run caught a real bug in its own cleanup logic - deleting `builds` before
+`deploys` in the teardown step hit `deploys.buildId`'s `ON DELETE RESTRICT`. Fixed by deleting
+just the service and trusting the schema's already-correct cascades, the same pattern
+`deleteService` itself uses, instead of hand-ordering child-table deletes.
+
 ## 1.6.0
 
 Every admin page now has its own real browser tab title instead of the same generic site
