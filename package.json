@@ -1,6 +1,6 @@
 {
   "name": "ballast",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "private": true,
   "description": "A deployment and observability control plane: a real build runner, deploy/rollback on build history, metrics + alerting, and a cost estimator.",
   "keywords": ["deployment", "ci-cd", "observability", "devops", "nextjs"],
