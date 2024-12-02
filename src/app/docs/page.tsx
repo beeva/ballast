@@ -81,6 +81,17 @@ export default function DocsPage() {
             just if the app process crashed.
           </p>
         </div>
+
+        <div className="mt-10">
+          <h2 className="font-display text-xl text-iron-50">Verifying it all still works</h2>
+          <p className="mt-2 max-w-2xl text-sm text-iron-300">
+            <code className="rounded bg-iron-800 px-1.5 py-0.5">npm run smoke-test</code> runs the entire real
+            pipeline end to end against whatever database it&apos;s pointed at - clone, build, deploy, ingest a
+            metric, evaluate an alert rule, deliver a webhook - and cleans up after itself. It&apos;s the same
+            thing CI runs on every push, and it&apos;s safe to run against a database that already has real
+            services in it.
+          </p>
+        </div>
       </main>
       <Footer />
     </>
