@@ -17,14 +17,15 @@ Most of the pain in running software isn't the code, it's everything around it: 
 - **Boring by design** — releases and rollbacks are the same well-tested path every time, not a special ritual for the risky ones.
 - **Observable before it's an incident** — metrics and alerts exist so a problem shows up as a graph, not a page from a customer.
 
-## Planned architecture
+## Architecture
 
 - Next.js (App Router) + TypeScript, Tailwind for the app and marketing site
-- A real build runner: shells out to actual build commands against a checked-out repo, in an isolated workspace, with captured logs
-- Postgres via Drizzle for services, builds, deploys, metrics, and alert state
-- A metrics-ingestion API and a threshold-based alert rule evaluator
-- A cost estimator from declared per-service resource requests
-- An admin dashboard for services, deploy history/rollback, and observability charts
+- A real build runner: shells out to actual build commands against a checked-out repo, in an isolated workspace, with captured logs and declared env vars
+- Postgres via Drizzle for services, builds, deploys, metrics, alert state, and an audit log
+- A metrics-ingestion API (API-key gated) and a threshold-based alert rule evaluator, with optional webhook notifications
+- A cost estimator from declared per-service resource requests, broken down per service
+- An auth-gated admin dashboard: services (create/edit/duplicate/delete/search), deploy history and rollback, build cancel/retry, alert rules (create/edit/delete/test), a fleet-wide deploys view, an audit log with CSV export, and self-service password change
+- A database-backed health check, a metrics retention script, and an end-to-end pipeline smoke test - the same one CI runs on every push
 
 ## Roadmap
 
